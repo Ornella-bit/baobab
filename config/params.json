@@ -13,5 +13,18 @@
     "surcout_commande_express_sigma_pct": 6,
     "surcout_report_production_pct": 2
   },
-  "seuils_confiance": {"vert": 80, "orange": 60}
+  "seuils_confiance": {
+    "vert": 80,
+    "orange": 60
+  },
+  "unite_cible": {
+    "sucre": "kg",
+    "bouteilles": "unites",
+    "concentre_mangue": "unites",
+    "concentre_orange": "unites"
+  },
+  "conversions": {
+    "tonnes_vers_kg": 1000,
+    "bouteilles_par_carton": 24
+  }
 }
