@@ -1,0 +1,17 @@
+{
+  "societe": "Délice SA",
+  "date_reference": "2026-11-02",
+  "seed": 42,
+  "scenario": {
+    "fournisseur_en_retard": "Delta",
+    "retard_jours": 5,
+    "matiere": "concentre_mangue",
+    "ligne": "Ligne 2",
+    "consommation_par_jour": 1200,
+    "stock_ligne": 4800,
+    "stock_entrepot_nord": 3000,
+    "surcout_commande_express_sigma_pct": 6,
+    "surcout_report_production_pct": 2
+  },
+  "seuils_confiance": {"vert": 80, "orange": 60}
+}
