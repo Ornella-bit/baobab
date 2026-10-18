@@ -10,6 +10,10 @@ h2, h3 { color: #0F3D2E; letter-spacing: -0.01em; }
   box-shadow: 0 1px 2px rgba(20,32,27,.04); }
 [data-testid="stSidebar"] { border-right: 1px solid #C2D0C4; }
 .stButton > button, .stDownloadButton > button { border-radius: 10px; font-weight: 600; }
+.stButton > button p, .stButton > button div { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; }
+.stButton > button { height: auto; min-height: 2.6rem; padding: .5rem .8rem; line-height: 1.3; }
+[data-testid="stMetricLabel"], [data-testid="stMetricLabel"] * { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; }
+[data-testid="stMetricValue"], [data-testid="stMetricValue"] * { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; font-size: 1.9rem !important; }
 [data-testid="stVerticalBlockBorderWrapper"] { border-radius: 14px; }
 .bb-head { display: flex; align-items: center; gap: 14px; margin: 0 0 1.1rem 0; }
 .bb-ico { width: 48px; height: 48px; border-radius: 14px; background: #F5F8F3; border: 1px solid #C2D0C4; font-size: 26px; display: flex; align-items: center; justify-content: center; flex: none; }

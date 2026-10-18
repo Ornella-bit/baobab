@@ -39,11 +39,11 @@ for m in st.session_state.messages:
 
 suggestions = ["Que se passe-t-il si Delta a 5 jours de retard ?", "Combien de jours de stock reste-t-il à la Ligne 2 ?",
                "D'où vient le nectar de mangue ?", "Quel est le salaire du directeur ?"]
-colonnes = st.columns(len(suggestions))
 choix = None
-for col, s in zip(colonnes, suggestions):
-    if col.button(s, key=f"sugg_{s}", width="stretch"):
-        choix = s
+for rang in (suggestions[:2], suggestions[2:]):
+    for col, s in zip(st.columns(2), rang):
+        if col.button(s, key=f"sugg_{s}", width="stretch"):
+            choix = s
 question = st.chat_input("Pose une question sur la chaîne de production…") or choix
 
 if question:
