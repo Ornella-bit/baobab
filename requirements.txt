@@ -1,13 +1,8 @@
-streamlit
+streamlit>=1.50
 pandas
-numpy
-scikit-learn
 networkx
-pyvis
 rapidfuzz
-pypdf
 reportlab
 openpyxl
 anthropic
 python-dotenv
-plotly

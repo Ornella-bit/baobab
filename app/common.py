@@ -1,4 +1,5 @@
 """Elements partages par les pages : chemin Python, choix du role, donnees de travail et analyse."""
+import subprocess
 import sys
 from pathlib import Path
 
@@ -15,8 +16,12 @@ ROLES = ["Directeur général", "Stagiaire logistique"]
 
 
 def setup(page_title):
-    """Verifie que les donnees existent (la page, le theme et le role sont geres par main.py)."""
+    """Verifie que les donnees existent ; sur un serveur neuf (deploiement), les cree toutes seules."""
     st.session_state.setdefault("role", ROLES[0])
+    if not data_ready():
+        with st.spinner("Première ouverture : création des données fictives (environ 20 secondes)…"):
+            subprocess.run([sys.executable, str(ROOT / "generate_data.py")], cwd=ROOT, capture_output=True, check=False)
+        st.cache_data.clear()
     if not data_ready():
         st.error("Les données n'existent pas encore. Lance d'abord : `python generate_data.py`")
         st.stop()
