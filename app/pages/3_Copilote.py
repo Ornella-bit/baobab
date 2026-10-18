@@ -1,14 +1,60 @@
 import streamlit as st
-from common import setup
+from common import analyse, setup, working_data
+
+from core import copilot, rbac
 
 setup("Copilote")
 st.title("3 · Copilote")
-st.caption("Étape 2 : zone de discussion vide. Le modèle de langage et le score de confiance arrivent plus tard.")
+role = st.session_state.get("role", rbac.ROLES[0])
+data = working_data()
+scores, _, _ = analyse()
+EMOJI = {"vert": "🟢", "orange": "🟠", "rouge": "🔴"}
+
+with st.sidebar:
+    hors_ligne = st.toggle("Mode hors ligne (sans Internet)", value=False,
+                           help="Le copilote répond avec les mêmes fonctions de calcul, sans modèle de langage.")
+    st.caption("Cette démo utilise l'IA si une clé d'API est configurée dans .env, sinon le mode hors ligne.")
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
+
+
+def afficher(m):
+    with st.chat_message(m["role"]):
+        st.write(m["content"])
+        meta = m.get("meta")
+        if not meta:
+            return
+        if meta["confiance"]:
+            c = meta["confiance"]
+            st.markdown(f"**Confiance :** {EMOJI[c['couleur']]} {c['score']} / 100 · source la plus faible : {c['plus_faible']} "
+                        f"({scores[c['plus_faible']]})")
+            if c["a_confirmer"]:
+                st.warning("À confirmer : les données utilisées sont peu fiables.")
+        if meta["sources"]:
+            st.caption("Sources : " + ", ".join(meta["sources"]) + f" · mode : {meta['mode'].replace('_', ' ')}")
+
+
 for m in st.session_state.messages:
-    st.chat_message(m["role"]).write(m["content"])
-if question := st.chat_input("Pose une question sur la chaîne de production…"):
+    afficher(m)
+
+suggestions = ["Que se passe-t-il si Delta a 5 jours de retard ?", "Combien de jours de stock reste-t-il à la Ligne 2 ?",
+               "D'où vient le nectar de mangue ?", "Quel est le salaire du directeur ?"]
+colonnes = st.columns(len(suggestions))
+choix = None
+for col, s in zip(colonnes, suggestions):
+    if col.button(s, key=f"sugg_{s}", width="stretch"):
+        choix = s
+question = st.chat_input("Pose une question sur la chaîne de production…") or choix
+
+if question:
     st.session_state.messages.append({"role": "user", "content": question})
-    st.session_state.messages.append({"role": "assistant", "content": "Le copilote n'est pas encore branché."})
+    afficher(st.session_state.messages[-1])
+    with st.spinner("Analyse en cours…"):
+        r = copilot.ask(question, role, data, scores, mode="hors_ligne" if hors_ligne else "auto")
+    st.session_state.messages.append({"role": "assistant", "content": r["texte"], "meta": r})
+    afficher(st.session_state.messages[-1])
+
+if st.session_state.messages and st.button("Effacer la conversation"):
+    st.session_state.messages = []
     st.rerun()
