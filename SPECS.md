@@ -65,8 +65,8 @@ Toutes les fonctions reçoivent des DataFrames pandas ou le dictionnaire `data` 
 | `graph.build_graph(data)` | `networkx.DiGraph` (fournisseur, matière, ligne, produit, commande, client) |
 | `graph.downstream(graph, noeud)` | liste de `(nom, type)` touchés en aval |
 | `simulate.stock_coverage(data, ligne, matiere)` | `{stock, conso_par_jour, jours}` |
-| `simulate.simulate_supplier_delay(data, fournisseur, retard_jours)` | `{arret_jour, manque, commandes, clients, couverture_jours, ligne, matiere}` |
-| `simulate.list_options(data, simulation)` | 3 options `{code, libelle, surcout_pct, risque, faisable}` |
+| `simulate.simulate_supplier_delay(data, fournisseur, retard_jours)` | `{arret_jour, manque, commandes, clients, couverture_jours, ligne, matiere, details, commandes_detail, noeuds_impactes}` ; `details` = une entrée par ligne et matière du fournisseur, `ligne` = la ligne la plus touchée |
+| `simulate.list_options(data, simulation)` | 3 options `{code, libelle, surcout_pct, risque, faisable}` si un arrêt est prévu, liste vide sinon |
 | `trust.score_from_parts(c, u, v, h)` | note de 0 à 100 (écrit) |
 | `trust.trust_score(sources, scores, poids=None)` | `{score, couleur, a_confirmer, plus_faible}` (écrit) |
 | `rbac.can_validate(role)`, `rbac.apply_role(df, fichier, role)` | booléen, DataFrame masqué (écrit) |
