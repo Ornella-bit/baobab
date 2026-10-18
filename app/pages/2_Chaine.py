@@ -1,6 +1,7 @@
 import pandas as pd
 import streamlit as st
 from common import analyse, setup, working_data
+from theme import acces_refuse, page_header, show_svg, trust_html
 from visuals import chain_svg
 
 from core import rbac
@@ -10,13 +11,12 @@ from core.simulate import list_options, simulate_supplier_delay
 from core.trust import trust_score
 
 setup("Chaîne")
-st.title("2 · Chaîne de production (SupplyMind)")
+page_header("🔗", "2 · Chaîne de production", "SupplyMind : relier la chaîne de bout en bout et simuler un retard")
 role = st.session_state.get("role", rbac.ROLES[0])
 data = working_data()
 scores, _, _ = analyse()
 sc = PARAMS["scenario"]
 EMOJI_RISQUE = {"faible": "🟢", "moyen": "🟠", "eleve": "🔴"}
-EMOJI_CONF = {"vert": "🟢", "orange": "🟠", "rouge": "🔴"}
 
 
 def nombre(n):
@@ -50,15 +50,14 @@ m5.metric("Clients touchés", len(sim["clients"]))
 
 # --- confiance -------------------------------------------------------------------------------
 t = trust_score(["stocks", "production", "fournisseurs", "commandes"], scores)
-st.markdown(f"**Confiance de cette analyse :** {EMOJI_CONF[t['couleur']]} {t['score']} / 100 · source la plus faible : "
-            f"{t['plus_faible']} ({scores[t['plus_faible']]})")
+st.html("<b>Confiance de cette analyse</b> &nbsp; " + trust_html(t, scores))
 if t["a_confirmer"]:
     st.warning("Confiance basse : à confirmer avant de décider. Corrige d'abord les données (page 1).")
 
 # --- graphe ----------------------------------------------------------------------------------
 st.subheader("La chaîne de bout en bout")
 graphe = build_graph(data)
-st.html(chain_svg(graphe, sim["noeuds_impactes"], source=fournisseur if sim["arret_jour"] is not None else None))
+show_svg(chain_svg(graphe, sim["noeuds_impactes"], source=fournisseur if sim["arret_jour"] is not None else None))
 
 # --- commandes menacees et options -------------------------------------------------------------
 if sim["commandes_detail"]:
@@ -82,6 +81,6 @@ if options:
                         st.session_state["option_retenue"] = o["code"]
                         rbac.log_action(role, "option_retenue", f"{fournisseur} {retard} j : option {o['code']}")
                 else:
-                    st.caption("Décision réservée au directeur général.")
+                    acces_refuse("à cette décision")
     if st.session_state.get("option_retenue"):
         st.success(f"Option {st.session_state['option_retenue']} retenue et inscrite au journal des actions.")

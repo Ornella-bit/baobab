@@ -1,12 +1,13 @@
 import pandas as pd
 import streamlit as st
 from common import analyse, global_sains, reset_demo, setup, working_data
+from theme import acces_refuse, gauge_card, page_header
 
 from core import pii, quality, rbac
 from core.trust import couleur
 
 setup("Données")
-st.title("1 · Données (DataCompass)")
+page_header("🗂️", "1 · Données", "DataCompass : scanner, corriger et protéger les données de l'entreprise")
 role = st.session_state.get("role", rbac.ROLES[0])
 data = working_data()
 scores, issues, sains = analyse()
@@ -17,11 +18,15 @@ n_problemes = sum(len(v) for v in issues.values())
 EMOJI = {"vert": "🟢", "orange": "🟠", "rouge": "🔴"}
 
 # --- chiffres cles -------------------------------------------------------------------------
-c1, c2, c3, c4 = st.columns(4)
-c1.metric("Note globale de qualité", f"{note_globale}", f"{note_globale - avant['note']:+.1f} depuis le départ")
-c2.metric("Lignes sans défaut", f"{sains_globale} %", f"{sains_globale - avant['sains']:+.1f} points")
-c3.metric("Problèmes détectés", f"{n_problemes}", f"{n_problemes - avant['problemes']:+d}", delta_color="inverse")
-c4.metric("Colonnes personnelles", pii.count_pii(data), help="noms, téléphones, e-mails, salaires, dates de naissance")
+cg, ck = st.columns([1, 2], gap="medium")
+cg.html(gauge_card("NOTE DE QUALITÉ", note_globale, avant["note"] if avant["note"] != note_globale else None))
+with ck:
+    c1, c2 = st.columns(2)
+    c3, c4 = st.columns(2)
+    c1.metric("Note globale de qualité", f"{note_globale}", f"{note_globale - avant['note']:+.1f} depuis le départ")
+    c2.metric("Lignes sans défaut", f"{sains_globale} %", f"{sains_globale - avant['sains']:+.1f} points")
+    c3.metric("Problèmes détectés", f"{n_problemes}", f"{n_problemes - avant['problemes']:+d}", delta_color="inverse")
+    c4.metric("Colonnes personnelles", pii.count_pii(data), help="noms, téléphones, e-mails, salaires, dates de naissance")
 
 # --- tableau des fichiers ----------------------------------------------------------------
 tableau = pd.DataFrame([{
@@ -48,7 +53,7 @@ with col_a:
             rbac.log_action(role, "valider_corrections", f"{n_corr} corrections validées")
             st.rerun()
     else:
-        st.warning("Seul le directeur général peut valider les corrections. Change de rôle dans la barre latérale.")
+        acces_refuse("à la validation des corrections")
 with col_b:
     if st.button("↩️ Remettre la démo à zéro"):
         reset_demo()
@@ -61,11 +66,15 @@ masquees = rbac.COLONNES_MASQUEES.get(role, {}).get(fichier, [])
 tab_apercu, tab_pb, tab_pii = st.tabs(["Aperçu", "Problèmes", "Données personnelles"])
 
 with tab_apercu:
+    if masquees:
+        acces_refuse("aux colonnes " + ", ".join(masquees) + " de ce fichier")
     st.dataframe(rbac.apply_role(data[fichier], fichier, role).head(200), width="stretch")
     st.caption(f"{len(data[fichier])} lignes · {len(data[fichier].columns)} colonnes")
 
 with tab_pb:
     lst = issues[fichier]
+    if masquees:
+        acces_refuse("aux valeurs des colonnes " + ", ".join(masquees))
     if not lst:
         st.success("Aucun problème détecté.")
     else:
@@ -91,6 +100,9 @@ with tab_pii:
     else:
         st.info("Aucune donnée personnelle détectée dans ce fichier.")
 
+st.subheader("Journal des actions")
 if rbac.can_validate(role):
-    with st.expander("Journal des actions"):
+    with st.expander("Voir le journal"):
         st.dataframe(rbac.read_log(), hide_index=True, width="stretch")
+else:
+    acces_refuse("au journal des actions")

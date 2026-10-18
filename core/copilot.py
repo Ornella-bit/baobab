@@ -244,7 +244,7 @@ def ask(question, role, data, scores, mode="auto", client=None, journaliser=True
     if any(mot in q for mot in ("salaire", "remuneration", "paie ", "naissance")):  # droits : jamais de donnees RH
         if role != "Directeur général":
             rbac.log_action(role, "acces_refuse", question[:120]) if journaliser else None
-            return reponse("Cette information est réservée au directeur général.", "garde-fou")
+            return reponse("Vous n'avez pas accès à cette information.", "garde-fou")
         return reponse("Je ne sais pas : les données des salariés ne sont pas accessibles au copilote dans ce prototype.", "garde-fou")
 
     if mode != "hors_ligne":

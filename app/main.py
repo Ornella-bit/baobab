@@ -1,16 +1,17 @@
+"""Point d'entree : menu de gauche (Accueil, Données, Chaîne, Copilote), thème et choix du rôle."""
 import streamlit as st
-from common import PARAMS, contracts, get_data, setup
+from common import ROLES
+from theme import inject_css
 
-setup("Accueil")
-st.title("🌳 BAOBAB")
-st.subheader("Des données fiables, une chaîne de production sous contrôle")
-st.write(
-    f"Démonstration sur les données **fictives** de {PARAMS['societe']}, une usine de jus de fruits. "
-    "Utilise le menu de gauche : **Données**, **Chaîne**, **Copilote**."
-)
-data = get_data()
-cols = st.columns(len(data) + 1)
-for col, (nom, df) in zip(cols, data.items()):
-    col.metric(nom.capitalize(), f"{len(df):,}".replace(",", " "), help="nombre de lignes")
-cols[-1].metric("Contrats PDF", len(contracts()))
-st.info(f"Rôle actuel : **{st.session_state.get('role', '—')}**")
+st.set_page_config(page_title="BAOBAB", page_icon="🌳", layout="wide")
+inject_css()
+with st.sidebar:
+    st.markdown("### 🌳 BAOBAB")
+    st.selectbox("Rôle de l'utilisateur", ROLES, key="role")
+
+st.navigation([
+    st.Page("accueil.py", title="Accueil", icon="🏠", default=True),
+    st.Page("pages/1_Donnees.py", title="Données", icon="🗂️"),
+    st.Page("pages/2_Chaine.py", title="Chaîne", icon="🔗"),
+    st.Page("pages/3_Copilote.py", title="Copilote", icon="💬"),
+]).run()

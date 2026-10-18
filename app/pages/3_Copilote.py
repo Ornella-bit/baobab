@@ -1,14 +1,14 @@
 import streamlit as st
 from common import analyse, setup, working_data
+from theme import page_header, trust_html
 
 from core import copilot, rbac
 
 setup("Copilote")
-st.title("3 · Copilote")
+page_header("💬", "3 · Copilote", "Posez une question en français : la réponse cite ses sources et affiche sa confiance")
 role = st.session_state.get("role", rbac.ROLES[0])
 data = working_data()
 scores, _, _ = analyse()
-EMOJI = {"vert": "🟢", "orange": "🟠", "rouge": "🔴"}
 
 with st.sidebar:
     hors_ligne = st.toggle("Mode hors ligne (sans Internet)", value=False,
@@ -27,8 +27,7 @@ def afficher(m):
             return
         if meta["confiance"]:
             c = meta["confiance"]
-            st.markdown(f"**Confiance :** {EMOJI[c['couleur']]} {c['score']} / 100 · source la plus faible : {c['plus_faible']} "
-                        f"({scores[c['plus_faible']]})")
+            st.html(trust_html(c, scores))
             if c["a_confirmer"]:
                 st.warning("À confirmer : les données utilisées sont peu fiables.")
         if meta["sources"]:

@@ -15,11 +15,8 @@ ROLES = ["Directeur général", "Stagiaire logistique"]
 
 
 def setup(page_title):
-    st.set_page_config(page_title=f"BAOBAB · {page_title}", page_icon="🌳", layout="wide")
-    with st.sidebar:
-        st.markdown("### 🌳 BAOBAB")
-        st.caption(f"Démo sur données fictives · {PARAMS['societe']}")
-        st.selectbox("Rôle de l'utilisateur", ROLES, key="role")
+    """Verifie que les donnees existent (la page, le theme et le role sont geres par main.py)."""
+    st.session_state.setdefault("role", ROLES[0])
     if not data_ready():
         st.error("Les données n'existent pas encore. Lance d'abord : `python generate_data.py`")
         st.stop()

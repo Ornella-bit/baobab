@@ -36,7 +36,7 @@ assert "Delta" in r["texte"] and "Sigma" in r["texte"] and "Alpha" in r["texte"]
 
 # 4) droits : jamais de salaires, surtout pour le stagiaire
 r = ask("Quel est le salaire du directeur ?", role=STAG)
-assert "réservée au directeur général" in r["texte"] and r["sources"] == [] and r["confiance"] is None
+assert "n'avez pas accès" in r["texte"] and r["sources"] == [] and r["confiance"] is None
 r = ask("Quel est le salaire du directeur ?", role=DG)
 assert r["texte"].startswith("Je ne sais pas") and r["confiance"] is None
 
