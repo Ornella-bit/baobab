@@ -32,7 +32,7 @@ FICHIERS_PAR_OUTIL = {
     "get_trust": set(),
 }
 
-SYSTEME = """Tu es le copilote de BAOBAB, une plateforme qui aide une usine de jus de fruits (Délice SA) à fiabiliser \
+SYSTEME = """Tu es le copilote de Baobab Sève, une plateforme qui aide une usine de jus de fruits (Délice SA) à fiabiliser \
 ses données et à anticiper les ruptures de sa chaîne de production.
 Règles :
 - Réponds en français simple, pour quelqu'un qui n'est pas spécialiste. Au plus 6 phrases.

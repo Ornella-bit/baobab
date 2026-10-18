@@ -1,12 +1,16 @@
 """Point d'entree : menu de gauche (Accueil, Données, Chaîne, Copilote), thème et choix du rôle."""
+from pathlib import Path
+
 import streamlit as st
+from PIL import Image
 from common import ROLES
 from theme import inject_css
 
-st.set_page_config(page_title="BAOBAB", page_icon="🌳", layout="wide")
+ASSETS = Path(__file__).parent / "assets"
+st.set_page_config(page_title="Baobab Sève", page_icon=Image.open(ASSETS / "favicon.png"), layout="wide")
 inject_css()
 with st.sidebar:
-    st.markdown("### 🌳 BAOBAB")
+    st.image(str(ASSETS / "logo.png"), width="stretch")
     st.selectbox("Rôle de l'utilisateur", ROLES, key="role")
 
 st.navigation([

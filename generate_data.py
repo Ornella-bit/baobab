@@ -216,7 +216,7 @@ for four in ("Alpha", "Delta", "Sigma"):
                   f"Durée : {random.choice([12, 18, 24, 36])} mois",
                   f"Pénalité de retard : {random.choice([1, 2, 3])} % du montant par jour de retard",
                   f"Date d'échéance : {txt_date}", "",
-                  "Document fictif généré pour la démonstration BAOBAB."]
+                  "Document fictif généré pour la démonstration Baobab Sève."]
         y = 780
         for ligne in lignes:
             c.drawString(60, y, ligne)

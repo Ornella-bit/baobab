@@ -1,10 +1,10 @@
-# BAOBAB · Spécifications du prototype
+# Baobab Sève · Spécifications du prototype
 
 Version 1, figée à l'étape 3. Ce fichier est le contrat entre les modules : si on change un nom ou un format, on le change ici d'abord.
 
 ## 1. But et scénario de démonstration
 
-Montrer en moins de 3 minutes que BAOBAB (1) fiabilise des données, (2) anticipe un arrêt de production et (3) dit à quel point chaque réponse est fiable. Données **fictives** de « Délice SA », usine de jus de fruits.
+Montrer en moins de 3 minutes que Baobab Sève (1) fiabilise des données, (2) anticipe un arrêt de production et (3) dit à quel point chaque réponse est fiable. Données **fictives** de « Délice SA », usine de jus de fruits.
 
 | Fait du scénario | Valeur |
 | --- | --- |

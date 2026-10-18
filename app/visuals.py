@@ -1,10 +1,10 @@
-"""Visuels de l'application (SVG), aux couleurs de la fiche BAOBAB."""
+"""Visuels de l'application (SVG), aux couleurs de Baobab Sève."""
 import math
 import random
 
 from core.graph import ORDRE
 
-INK, MUT, GREEN, RED, ORG, DEEP = "#14201B", "#55655F", "#2B7A3E", "#D6334A", "#E4571F", "#0F3D2E"
+INK, MUT, GREEN, RED, ORG, DEEP = "#202923", "#5E655E", "#24543B", "#D6334A", "#C95635", "#24543B"
 LIGNE, NEUTRE = "#C9D3CD", "#F4F7F5"
 TITRES = {"fournisseur": "Fournisseurs", "matiere": "Matières", "ligne": "Lignes", "produit": "Produits",
           "commande": "Commandes", "client": "Clients"}

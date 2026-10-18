@@ -1,14 +1,14 @@
-# BAOBAB
+<p align="center"><img src="app/assets/logo.png" alt="Baobab Sève : de la donnée à la décision" width="340"></p>
 
-<p align="center"><img src="app/assets/baobab.png" alt="L'arbre BAOBAB : racines, tronc, cime" width="300"></p>
+# Baobab Sève
 
-> Des racines propres, un tronc qui relie tout, une cime qui éclaire les décisions.
+> De la donnée à la décision. Des racines propres, un tronc qui relie tout, une cime qui éclaire les décisions.
 
-**[🌐 Essayer la démo en ligne](LIEN_SITE)** · **[▶️ Voir la vidéo de démonstration](LIEN_YOUTUBE)**
+**[🌐 Essayer la démo en ligne](LIEN_SITE)** · **[▶️ Voir la vidéo de démonstration](https://youtu.be/BmTEEoGUr6g)**
 
 Prototype réalisé pour le **CREATE WITH AI Hackathon** (JNC Africa, 2026). Il fiabilise les données d'une entreprise, relie sa chaîne de production, et répond aux questions en français avec ses sources et un score de confiance. Toutes les données sont **fictives** (usine de jus de fruits « Délice SA »).
 
-## Ce que fait BAOBAB
+## Ce que fait Baobab Sève
 
 | Page | Rôle | Ce qu'on y voit |
 | --- | --- | --- |
@@ -58,6 +58,6 @@ Chaque commande doit se terminer par « OK ».
 
 ## Limites assumées
 
-- Les données sont fictives : BAOBAB n'a pas encore été testé sur les fichiers d'une vraie entreprise.
+- Les données sont fictives : Baobab Sève n'a pas encore été testé sur les fichiers d'une vraie entreprise.
 - Les rôles sont simulés (pas de connexion avec mot de passe) : c'est un prototype de démonstration.
 - Testé sur 6 517 lignes ; pour des volumes bien plus grands, les fichiers seraient remplacés par une base de données.
