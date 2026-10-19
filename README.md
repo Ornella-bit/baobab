@@ -4,7 +4,7 @@
 
 > De la donnée à la décision. Des racines propres, un tronc qui relie tout, une cime qui éclaire les décisions.
 
-**[🌐 Essayer la démo en ligne](LIEN_SITE)** · **[▶️ Voir la vidéo de démonstration](https://youtu.be/BmTEEoGUr6g)**
+**[🌐 Essayer la démo en ligne](https://baobao-seve.streamlit.app/)** · **[▶️ Voir la vidéo de démonstration](https://youtu.be/tuzpyNcVVX0)**
 
 Prototype réalisé pour le **CREATE WITH AI Hackathon** (JNC Africa, 2026). Il fiabilise les données d'une entreprise, relie sa chaîne de production, et répond aux questions en français avec ses sources et un score de confiance. Toutes les données sont **fictives** (usine de jus de fruits « Délice SA »).
 

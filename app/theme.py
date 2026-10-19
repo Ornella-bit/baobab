@@ -21,7 +21,7 @@ h2, h3 { color: #24543B; letter-spacing: -0.01em; }
 .bb-t { font-size: 1.7rem; font-weight: 800; color: #202923; line-height: 1.15; letter-spacing: -0.02em; }
 .bb-s { font-size: .95rem; color: #5E655E; margin-top: 2px; }
 .bb-kick { font-size: .78rem; font-weight: 700; letter-spacing: .14em; color: #24543B; text-transform: uppercase; }
-.bb-h1 { font-size: 3.2rem; font-weight: 700; color: #24543B; letter-spacing: -0.03em; line-height: 1.05; margin: 6px 0 8px; }
+.bb-h1 { font-size: 3.2rem; font-weight: 700; color: #202923; letter-spacing: -0.03em; line-height: 1.05; margin: 6px 0 8px; }
 .bb-tag { font-size: 1.25rem; font-weight: 600; color: #C95635; margin: 0 0 12px; font-family: 'Playfair Display', Georgia, serif; font-style: italic; }
 .bb-lead { font-size: 1.12rem; color: #202923; line-height: 1.45; margin-bottom: 14px; }
 .bb-pts { display: flex; flex-wrap: wrap; gap: 8px; }
