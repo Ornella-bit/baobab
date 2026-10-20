@@ -1,10 +1,10 @@
 import pandas as pd
 import streamlit as st
-from common import analyse, setup, working_data
-from theme import acces_refuse, page_header, show_svg, trust_html
+from common import analyse, db_path, log_action, setup, working_data
+from theme import acces_refuse, page_header, show_svg, show_table, trust_html
 from visuals import chain_svg
 
-from core import rbac
+from core import db, rbac
 from core.graph import build_graph
 from core.loader import PARAMS
 from core.simulate import list_options, simulate_supplier_delay
@@ -65,7 +65,7 @@ if sim["commandes_detail"]:
     tableau = pd.DataFrame(sim["commandes_detail"]).rename(columns={
         "commande_id": "Commande", "client": "Client", "produit": "Produit", "quantite": "Quantité",
         "date_livraison": "Livraison", "jour": "Jour"})
-    st.dataframe(tableau, hide_index=True, width="stretch")
+    show_table(tableau, hide_index=True)
 
 options = list_options(data, sim)
 if options:
@@ -79,8 +79,22 @@ if options:
                 if rbac.can_validate(role):
                     if st.button(f"Retenir l'option {o['code']}", key=f"option_{o['code']}"):
                         st.session_state["option_retenue"] = o["code"]
-                        rbac.log_action(role, "option_retenue", f"{fournisseur} {retard} j : option {o['code']}")
+                        log_action(role, "option_retenue", f"{fournisseur} {retard} j : option {o['code']}")
+                        db.add_decision(role, fournisseur, retard, o["code"], o["libelle"], db_path())
                 else:
                     acces_refuse("à cette décision")
     if st.session_state.get("option_retenue"):
         st.success(f"Option {st.session_state['option_retenue']} retenue et inscrite au journal des actions.")
+
+# --- decisions prises (base de donnees) -------------------------------------------------------
+st.subheader("Décisions prises")
+if rbac.can_validate(role):
+    decisions = db.read_decisions(db_path())
+    if decisions.empty:
+        st.caption("Aucune décision retenue pour le moment : chaque décision sera conservée dans la base de données.")
+    else:
+        show_table(decisions.rename(columns={"horodatage": "Date", "role": "Rôle", "fournisseur": "Fournisseur",
+                                               "retard_jours": "Retard (jours)", "option_code": "Option", "libelle": "Solution"}),
+                     hide_index=True)
+else:
+    acces_refuse("aux décisions prises")

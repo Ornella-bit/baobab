@@ -16,6 +16,11 @@ h2, h3 { color: #24543B; letter-spacing: -0.01em; }
 [data-testid="stMetricLabel"], [data-testid="stMetricLabel"] * { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; }
 [data-testid="stMetricValue"], [data-testid="stMetricValue"] * { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; font-size: 1.9rem !important; }
 [data-testid="stVerticalBlockBorderWrapper"] { border-radius: 14px; }
+.bb-tbl-wrap { max-height: 430px; overflow: auto; border: 1px solid #DDD3BC; border-radius: 12px; background: #FBF8F0; margin-bottom: .6rem; }
+.bb-tbl { border-collapse: collapse; width: 100%; font-size: .86rem; color: #202923; }
+.bb-tbl th { position: sticky; top: 0; background: #F0E9D6; color: #24543B; text-align: left; font-weight: 700; padding: 8px 12px; border-bottom: 2px solid #24543B; white-space: nowrap; }
+.bb-tbl td { padding: 7px 12px; border-bottom: 1px solid #E7DFC9; vertical-align: top; }
+.bb-tbl tr:nth-child(even) td { background: #F6F1E3; }
 .bb-head { display: flex; align-items: center; gap: 14px; margin: 0 0 1.1rem 0; }
 .bb-ico { width: 48px; height: 48px; border-radius: 14px; background: #F9F5E9; border: 1px solid #DDD3BC; font-size: 26px; display: flex; align-items: center; justify-content: center; flex: none; }
 .bb-t { font-size: 1.7rem; font-weight: 800; color: #202923; line-height: 1.15; letter-spacing: -0.02em; }
@@ -128,3 +133,80 @@ def gauge_card(titre, score, prev=None):
 
 def alert(couleur, grand, petit):
     return f"<div class='bb-alert {couleur}'><div><div class='big'>{grand}</div><div class='sm'>{petit}</div></div></div>"
+
+
+# --- affichage robuste des tableaux et courbes ---------------------------------------------------
+# st.dataframe et st.line_chart reposent sur la bibliotheque pyarrow. Sur certains ordinateurs Windows, une
+# strategie de securite (« Application Control ») bloque ses fichiers : l'application bascule alors, sans erreur,
+# sur un affichage HTML/SVG qui n'en a pas besoin.
+_ARROW_OK = {"ok": True}
+
+
+def _echappe(v):
+    import html
+    import pandas as pd
+    if v is None or (not isinstance(v, (list, dict)) and pd.isna(v)):
+        return ""
+    if isinstance(v, float) and v == int(v) and abs(v) < 1e15:
+        return html.escape(str(int(v)))
+    return html.escape(str(v))
+
+
+def _tableau_html(df, hide_index):
+    import pandas as pd
+    if isinstance(df, pd.Series):
+        df = df.to_frame()
+    df = df.head(300)
+    cols = list(df.columns)
+    entete = ("" if hide_index else "<th></th>") + "".join(f"<th>{_echappe(c)}</th>" for c in cols)
+    lignes = []
+    for idx, ligne in zip(df.index, df.itertuples(index=False, name=None)):
+        cellules = ("" if hide_index else f"<td><b>{_echappe(idx)}</b></td>") + "".join(f"<td>{_echappe(v)}</td>" for v in ligne)
+        lignes.append(f"<tr>{cellules}</tr>")
+    return f"<div class='bb-tbl-wrap'><table class='bb-tbl'><thead><tr>{entete}</tr></thead><tbody>{''.join(lignes)}</tbody></table></div>"
+
+
+def show_table(df, hide_index=False):
+    """Affiche un tableau (st.dataframe) ; si pyarrow est bloque par Windows, repli automatique sur un tableau HTML."""
+    if _ARROW_OK["ok"]:
+        try:
+            st.dataframe(df, hide_index=hide_index, width="stretch")
+            return
+        except (ImportError, OSError):
+            _ARROW_OK["ok"] = False
+    st.html(_tableau_html(df, hide_index))
+
+
+def _courbe_svg(etiquettes, valeurs, hauteur=230):
+    larg, g, d, h, b = 760, 46, 20, 22, 44
+    lo, hi = min(valeurs), max(valeurs)
+    marge = max((hi - lo) * 0.25, 1.0)
+    lo, hi = lo - marge, hi + marge
+    n = len(valeurs)
+    x = lambda i: g + 50 + (larg - g - d - 100) * (i / (n - 1) if n > 1 else 0.5)
+    y = lambda v: h + (hauteur - h - b) * (1 - (v - lo) / (hi - lo))
+    pts = " ".join(f"{x(i):.1f},{y(v):.1f}" for i, v in enumerate(valeurs))
+    grille = "".join(
+        f'<line x1="{g}" x2="{larg - d}" y1="{y(t):.1f}" y2="{y(t):.1f}" stroke="#E4DCC6" stroke-width="1"/>'
+        f'<text x="{g - 8}" y="{y(t) + 4:.1f}" text-anchor="end" font-size="12" fill="#5E6A62">{t:.0f}</text>'
+        for t in [lo + (hi - lo) * k / 3 for k in range(4)])
+    points = "".join(
+        f'<circle cx="{x(i):.1f}" cy="{y(v):.1f}" r="5" fill="#24543B"/>'
+        f'<text x="{x(i):.1f}" y="{y(v) - 11:.1f}" text-anchor="middle" font-size="13" font-weight="700" fill="#202923">{v:g}</text>'
+        f'<text x="{x(i):.1f}" y="{hauteur - 16}" text-anchor="middle" font-size="12" fill="#5E6A62">{e}</text>'
+        for i, (e, v) in enumerate(zip(etiquettes, valeurs)))
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {larg} {hauteur}" width="{larg}" height="{hauteur}">'
+            f'<rect width="{larg}" height="{hauteur}" fill="#FBF8F0"/>{grille}'
+            f'<polyline points="{pts}" fill="none" stroke="#24543B" stroke-width="3" stroke-linejoin="round"/>{points}</svg>')
+
+
+def show_line(etiquettes, valeurs, hauteur=230):
+    """Courbe d'une valeur au fil des etapes ; repli sur un SVG si pyarrow est bloque."""
+    if _ARROW_OK["ok"]:
+        try:
+            import pandas as pd
+            st.line_chart(pd.DataFrame({"Note de qualité": valeurs}, index=etiquettes), height=hauteur)
+            return
+        except (ImportError, OSError):
+            _ARROW_OK["ok"] = False
+    show_svg(_courbe_svg(etiquettes, valeurs, hauteur))

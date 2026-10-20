@@ -1,5 +1,5 @@
 import streamlit as st
-from common import analyse, setup, working_data
+from common import analyse, log_action, setup, working_data
 from theme import page_header, trust_html
 
 from core import copilot, rbac
@@ -50,7 +50,7 @@ if question:
     st.session_state.messages.append({"role": "user", "content": question})
     afficher(st.session_state.messages[-1])
     with st.spinner("Analyse en cours…"):
-        r = copilot.ask(question, role, data, scores, mode="hors_ligne" if hors_ligne else "auto")
+        r = copilot.ask(question, role, data, scores, mode="hors_ligne" if hors_ligne else "auto", log_fn=log_action)
     st.session_state.messages.append({"role": "assistant", "content": r["texte"], "meta": r})
     afficher(st.session_state.messages[-1])
 

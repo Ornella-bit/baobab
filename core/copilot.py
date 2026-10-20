@@ -228,12 +228,13 @@ def _client():
 
 
 # ------------------------------------------------------------------ point d'entree
-def ask(question, role, data, scores, mode="auto", client=None, journaliser=True):
+def ask(question, role, data, scores, mode="auto", client=None, journaliser=True, log_fn=None):
     """mode : « auto » (IA si possible, sinon hors ligne), « llm » (IA seulement), « hors_ligne »."""
     ctx = {"data": data, "scores": scores, "outils": [], "options": None}
     q = _norm(question)
+    journal = log_fn or rbac.log_action  # dans l'application, le journal est celui de la base du visiteur
     if journaliser:
-        rbac.log_action(role, "question", question[:120])
+        journal(role, "question", question[:120])
 
     def reponse(texte, mode_):
         sources = sorted(set().union(*(FICHIERS_PAR_OUTIL.get(o, set()) for o in ctx["outils"]))) if ctx["outils"] else []
@@ -243,7 +244,7 @@ def ask(question, role, data, scores, mode="auto", client=None, journaliser=True
 
     if any(mot in q for mot in ("salaire", "remuneration", "paie ", "naissance")):  # droits : jamais de donnees RH
         if role != "Directeur général":
-            rbac.log_action(role, "acces_refuse", question[:120]) if journaliser else None
+            journal(role, "acces_refuse", question[:120]) if journaliser else None
             return reponse("Vous n'avez pas accès à cette information.", "garde-fou")
         return reponse("Je ne sais pas : les données des salariés ne sont pas accessibles au copilote dans ce prototype.", "garde-fou")
 

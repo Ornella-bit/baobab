@@ -8,3 +8,5 @@ data/*
 !data/.gitkeep
 cache/audit.csv
 .streamlit/secrets.toml
+cache/db/
+cache/*.db
