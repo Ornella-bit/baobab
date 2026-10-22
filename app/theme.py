@@ -70,6 +70,16 @@ h2, h3 { color: #24543B; letter-spacing: -0.01em; }
 [data-testid="stChatInput"] { border-radius: 14px; }
 [data-testid="stExpander"] { border-radius: 12px; border-color: #DDD3BC; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+.bb-al { display: flex; gap: 12px; align-items: flex-start; border-radius: 14px; padding: 12px 16px; border: 1px solid; margin-bottom: 8px; }
+.bb-al.rouge { background: #FBE3E7; border-color: #F1B3BE; } .bb-al.orange { background: #FDEFE3; border-color: #F4C9A8; } .bb-al.vert { background: #E8F5EA; border-color: #B7DDBF; }
+.bb-al .pt { width: 12px; height: 12px; border-radius: 50%; margin-top: 5px; flex: none; }
+.bb-al.rouge .pt { background: #D6334A; } .bb-al.orange .pt { background: #E08A3C; } .bb-al.vert .pt { background: #3E8E5E; }
+.bb-al b { color: #202923; font-size: .95rem; } .bb-al span { display: block; color: #5E655E; font-size: .86rem; margin-top: 2px; }
+.bb-al .pg { margin-left: auto; font-size: .75rem; font-weight: 700; color: #5E655E; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+.bb-bar { display: flex; align-items: center; gap: 10px; margin: 7px 0; font-size: .9rem; color: #202923; }
+.bb-bar .n { flex: 0 0 150px; } .bb-bar .v { flex: 0 0 64px; text-align: right; font-weight: 700; }
+.bb-bar .t { flex: 1; height: 12px; background: #EFE8D5; border-radius: 999px; overflow: hidden; }
+.bb-bar .t i { display: block; height: 100%; border-radius: 999px; }
 </style>
 """
 
@@ -137,6 +147,19 @@ def gauge_card(titre, score, prev=None):
     return (f"<div class='bb-gauge'><div class='l'>{titre}</div>"
             f"<div class='bb-ring' style='background:conic-gradient(#3E8E5E 0deg {deg:.1f}deg, #DDD3BC {deg:.1f}deg 360deg)'>"
             f"<div class='in'><b>{score}</b><span>sur 100</span></div></div>{depart}</div>")
+
+
+def alert_rows(alertes):
+    """Liste d'alertes (core.alerts.compute_alerts) en cartes colorees."""
+    return "".join(f"<div class='bb-al {a['niveau']}'><div class='pt'></div><div><b>{a['titre']}</b><span>{a['detail']}</span></div>"
+                   f"<div class='pg'>{a['page']}</div></div>" for a in alertes)
+
+
+def bars_html(items, maximum=100):
+    """Barres horizontales en HTML pur. items : liste de (libelle, valeur, texte_valeur, couleur_css)."""
+    html = "".join(f"<div class='bb-bar'><div class='n'>{n}</div><div class='t'><i style='width:{max(2, min(100, 100 * v / maximum)):.1f}%;background:{c}'></i></div>"
+                   f"<div class='v'>{t}</div></div>" for n, v, t, c in items)
+    return f"<div>{html}</div>"
 
 
 def alert(couleur, grand, petit):

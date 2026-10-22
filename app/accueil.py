@@ -26,10 +26,11 @@ st.html(cards([
     ("🔗", "ÉTAPE 2 · TRONC", "Chaîne", "Relier fournisseurs, matières, lignes, commandes et clients, et simuler un retard."),
     ("💬", "ÉTAPE 3 · CIME", "Copilote", "Poser une question en français : réponse avec sources et score de confiance."),
 ]))
-c1, c2, c3 = st.columns(3)
+c1, c2, c3, c4 = st.columns(4)
 c1.page_link("pages/1_Donnees.py", label="Ouvrir les données", icon="🗂️")
 c2.page_link("pages/2_Chaine.py", label="Ouvrir la chaîne", icon="🔗")
 c3.page_link("pages/3_Copilote.py", label="Ouvrir le copilote", icon="💬")
+c4.page_link("pages/4_Tableau_de_bord.py", label="Tableau de bord et rapport PDF", icon="📊")
 
 st.subheader("Essayez le copilote en un clic")
 EXEMPLES = ["Que se passe-t-il si Delta a 5 jours de retard ?", "Quel client a passé la plus grosse commande ?",
