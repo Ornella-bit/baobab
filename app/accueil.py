@@ -31,6 +31,14 @@ c1.page_link("pages/1_Donnees.py", label="Ouvrir les données", icon="🗂️")
 c2.page_link("pages/2_Chaine.py", label="Ouvrir la chaîne", icon="🔗")
 c3.page_link("pages/3_Copilote.py", label="Ouvrir le copilote", icon="💬")
 
+st.subheader("Essayez le copilote en un clic")
+EXEMPLES = ["Que se passe-t-il si Delta a 5 jours de retard ?", "Quel client a passé la plus grosse commande ?",
+            "Compare Sigma et Delta", "Combien de lots de sucre avons-nous ?"]
+for colonne, exemple in zip(st.columns(len(EXEMPLES)), EXEMPLES):
+    if colonne.button(exemple, key=f"ex_{exemple}", width="stretch"):
+        st.session_state.en_attente = exemple  # la page Copilote répond dès son ouverture
+        st.switch_page("pages/3_Copilote.py")
+
 st.subheader("L'essentiel en un coup d'œil")
 g, a = st.columns([1, 2], gap="medium")
 with g:

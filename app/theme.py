@@ -62,6 +62,14 @@ h2, h3 { color: #24543B; letter-spacing: -0.01em; }
 .bb-ring span { font-size: .78rem; color: #5E655E; margin-top: 4px; }
 .bb-lock { display: flex; align-items: center; gap: 10px; background: #F3E9D6; border: 1px solid #E2CFA6; color: #6B4E12; border-radius: 12px; padding: 10px 14px; font-weight: 600; font-size: .92rem; margin: .3rem 0; }
 .bb-role { display: inline-block; background: #EADFC9; color: #24543B; border-radius: 999px; padding: 4px 12px; font-size: .84rem; font-weight: 700; }
+.bb-card, .bb-step, .bb-gauge, [data-testid="stMetric"] { transition: transform .18s ease, box-shadow .18s ease; }
+.bb-card:hover, .bb-step:hover, .bb-gauge:hover, [data-testid="stMetric"]:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(36,84,59,.12); }
+.stButton > button { transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease; }
+.stButton > button:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(36,84,59,.15); border-color: #24543B; }
+[data-testid="stChatMessage"] { border-radius: 16px; border: 1px solid #E7DFC9; background: #FBF8F0; padding: .9rem 1.1rem; margin-bottom: .6rem; }
+[data-testid="stChatInput"] { border-radius: 14px; }
+[data-testid="stExpander"] { border-radius: 12px; border-color: #DDD3BC; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
 """
 

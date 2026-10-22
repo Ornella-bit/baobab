@@ -71,7 +71,8 @@ Toutes les fonctions reçoivent des DataFrames pandas ou le dictionnaire `data` 
 | `trust.trust_score(sources, scores, poids=None)` | `{score, couleur, a_confirmer, plus_faible}` (écrit) |
 | `rbac.can_validate(role)`, `rbac.apply_role(df, fichier, role)` | booléen, DataFrame masqué (écrit) |
 | `rbac.log_action(role, action, detail)`, `rbac.read_log()` | écrit / lit `cache/audit.csv` (écrit) |
-| `copilot.ask(question, role, data, scores, mode="auto")` | `{texte, sources, confiance, options, outils, mode}` ; IA si une clé d'API est configurée, sinon moteur hors ligne qui appelle les mêmes fonctions |
+| `copilot.ask(question, role, data, scores, mode="auto", memoire=None, problemes=None, historique=None)` | `{texte, sources, confiance, options, outils, mode, memoire, suggestions, explication, intention, tableau, requete}` ; IA si une clé d'API est configurée, sinon moteur hors ligne qui appelle les mêmes fonctions |
+| `askdata.repondre(question, data, plan_precedent=None)` | `{texte, tableau, requete, plan, explication}` ou `None` : question libre -> plan -> SQL en lecture seule sur une copie sans données personnelles |
 | `copilot.get_stock_coverage(data, ligne, matiere)`, `copilot.get_passport(data, produit)` | `{ligne, matiere, stock, conso_par_jour, jours}` ; passeport du produit |
 
 Un **problème** est un dictionnaire : `id`, `fichier`, `type` (doublon, format, valeur_aberrante, manquant, unite), `ligne`, `colonne`, `valeur`, `correction`, `statut` (a_valider, valide, refuse).

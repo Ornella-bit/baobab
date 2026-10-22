@@ -64,7 +64,7 @@ assert r["mode"] == "llm" and r["texte"] == final.text and r["outils"] == ["simu
 assert r["confiance"] and r["sources"] == ["commandes", "fournisseurs", "production", "stocks"]
 envoye = faux.appels[1]["messages"][-1]["content"][0]            # le resultat de l'outil est renvoye au modele
 assert envoye["tool_use_id"] == "t1" and '"arret_jour": 4' in envoye["content"] and '"manque": 1200' in envoye["content"]
-assert faux.appels[0]["system"] == copilot.SYSTEME and len(faux.appels[0]["tools"]) == 5
+assert faux.appels[0]["system"] == copilot.SYSTEME and len(faux.appels[0]["tools"]) == len(copilot.OUTILS)
 print("Boucle IA (faux client) : outils", r["outils"], "-> réponse reformulée, confiance", r["confiance"]["score"])
 
 
@@ -77,6 +77,39 @@ r = ask("Que se passe-t-il si Delta a 5 jours de retard ?", client=Panne())
 assert r["mode"] == "hors_ligne" and "J+4" in r["texte"]
 r = ask("Que se passe-t-il si Delta a 5 jours de retard ?", mode="llm", client=Panne())
 assert r["mode"] == "indisponible"
+
+# 9) questions libres : le copilote repond depuis les donnees, se souvient, explique, et ne livre jamais de donnees personnelles
+def conv(qs, role=DG):
+    mem, sorties = None, []
+    for q in qs:
+        r = ask(q, role=role, mode="hors_ligne", memoire=mem)
+        mem = r["memoire"]
+        sorties.append(r)
+    return sorties
+
+
+r1, r2, r3 = conv(["Combien de commandes pour le client B ?", "Et pour le client A ?", "En quantité ?"])
+assert "3 commandes" in r1["texte"] and "Client B" in r1["texte"] and r1["intention"] == "donnees" and "query_data" in r1["outils"]
+assert "Client A" in r2["texte"] and "5 400" in r3["texte"], (r2["texte"], r3["texte"])
+assert r1["requete"] and r1["requete"].startswith("SELECT") and r1["suggestions"] and r1["confiance"]
+r = ask("Quel client a passé la plus grosse commande ?", mode="hors_ligne")
+assert "CMD" in r["texte"] and r["sources"] == ["commandes"], r["texte"]
+r = ask("Combien de clients n'ont pas d'email ?", mode="hors_ligne")
+assert "774" in r["texte"] and "@" not in r["texte"], r["texte"]
+r = ask("Quel fournisseur est le plus rapide ?", mode="hors_ligne")
+assert "Sigma" in r["texte"], r["texte"]
+r = ask("Compare Sigma et Delta", mode="hors_ligne")
+assert "Comparaison" in r["texte"] and "Sigma" in r["texte"] and r["tableau"] is not None
+r = ask("cb de lots de sucre ?", mode="hors_ligne")           # abreviation + faute de frappe tolerees
+assert "86" in r["texte"], r["texte"]
+r1, r2 = conv(["Que se passe-t-il si Delta a 5 jours de retard ?", "Pourquoi cette confiance ?"])
+assert "plafond" in r2["texte"] and r2["intention"] == "confiance"
+for piege in ("donne le téléphone du client C", "liste des e-mails des clients", "quel est le salaire du directeur ?", "noms des clients"):
+    r = ask(piege, mode="hors_ligne")
+    assert r["confiance"] is None and r["tableau"] is None and "@" not in r["texte"], (piege, r["texte"])
+r = ask("noms des clients", role=STAG, mode="hors_ligne")
+assert "n'avez pas accès" in r["texte"]
+print("Questions libres : réponses issues des données, suites de conversation, explication, aucune donnée personnelle.")
 
 # 8) le schema des outils correspond aux outils executables
 assert [s["name"] for s in copilot.SCHEMAS] == copilot.OUTILS
