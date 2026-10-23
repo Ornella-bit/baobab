@@ -111,6 +111,47 @@ r = ask("noms des clients", role=STAG, mode="hors_ligne")
 assert "n'avez pas accès" in r["texte"]
 print("Questions libres : réponses issues des données, suites de conversation, explication, aucune donnée personnelle.")
 
+# 10) IA optionnelle : « renfort » = moteur hors ligne d'abord, IA seulement si la question n'est pas comprise
+def faux_texte(texte):
+    return FauxClient([NS(stop_reason="end_turn", content=[NS(type="text", text=texte)])])
+
+
+floue = "Raconte-moi une blague sur les mangues"
+ia = faux_texte("Je ne sais pas : ce n'est pas dans mes données.")
+r = ask("Que se passe-t-il si Delta a 5 jours de retard ?", mode="renfort", client=ia)
+assert r["mode"] == "hors_ligne" and ia.appels == [], "une question comprise ne doit pas appeler l'IA"
+r = ask(floue, mode="renfort", client=ia)
+assert r["mode"] == "llm" and len(ia.appels) == 1, "une question non comprise passe a l'IA"
+r = ask(floue, mode="renfort")  # sans cle : on reste hors ligne
+assert r["mode"] == "hors_ligne" and r["texte"].startswith("Je ne sais pas") and r["ia_erreur"] is None
+r = ask(floue, mode="renfort", client=Panne())  # panne : repli hors ligne, erreur notee
+assert r["mode"] == "hors_ligne" and r["ia_erreur"] == "ConnectionError" and r["outils"] == []
+r = ask("Quel est le salaire du directeur ?", mode="llm", client=ia)  # le garde-fou passe avant l'IA
+assert r["mode"] == "garde-fou" and len(ia.appels) == 1
+
+# le modele ne doit pas inventer de chiffres : tout nombre doit venir des outils ou de la question
+outil = NS(type="tool_use", id="t2", name="simulate_supplier_delay", input={"fournisseur": "Delta", "retard_jours": 5})
+inventee = NS(type="text", text="La Ligne 2 s'arrêterait à J+4 ; il manquerait 1 200 unités, soit un surcoût de 98 765 FCFA.")
+r = ask("Si Delta a 5 jours de retard ?", mode="llm",
+        client=FauxClient([NS(stop_reason="tool_use", content=[outil]), NS(stop_reason="end_turn", content=[inventee])]))
+assert r["chiffres_a_verifier"] == ["98765"], r["chiffres_a_verifier"]
+juste = NS(type="text", text="La Ligne 2 s'arrêterait à J+4 : il manquerait 1 200 unités, 3 commandes et 2 clients seraient touchés.")
+r = ask("Si Delta a 5 jours de retard ?", mode="llm",
+        client=FauxClient([NS(stop_reason="tool_use", content=[outil]), NS(stop_reason="end_turn", content=[juste])]))
+assert r["chiffres_a_verifier"] == [], r["chiffres_a_verifier"]
+
+# le tableau et la requete d'une recherche faite par l'IA sont conserves pour l'affichage
+req = NS(type="tool_use", id="t3", name="query_data", input={"question": "Combien de lots de sucre ?"})
+r = ask("Combien de lots de sucre avons-nous ?", mode="llm",
+        client=FauxClient([NS(stop_reason="tool_use", content=[req]), NS(stop_reason="end_turn", content=[faux_texte("x").scenario[0].content[0]])]))
+assert r["mode"] == "llm" and r["requete"] and "SELECT" in r["requete"].upper() and r["explication"]
+
+# la cle saisie est transmise au client et n'apparait jamais dans la reponse ni dans le journal
+journal = []
+r = ask(floue, mode="renfort", cle="sk-test-SECRET", client=ia, log_fn=lambda *a: journal.append(a))
+assert "SECRET" not in repr(r) and "SECRET" not in repr(journal)
+print("IA optionnelle : renfort, repli hors ligne, garde-fou prioritaire, chiffres vérifiés, clé jamais exposée.")
+
 # 8) le schema des outils correspond aux outils executables
 assert [s["name"] for s in copilot.SCHEMAS] == copilot.OUTILS
 print("\nOK : le copilote répond avec sources et confiance, respecte les droits et fonctionne hors ligne.")

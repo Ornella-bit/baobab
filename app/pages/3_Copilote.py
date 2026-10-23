@@ -25,11 +25,43 @@ EXEMPLES = {
                                 "Combien de clients n'ont pas d'e-mail ?"],
 }
 
+def cle_secrete():
+    """Clé d'API : saisie par le visiteur (gardée en mémoire de sa session seulement) ou fournie par l'hébergeur."""
+    saisie = st.session_state.get("cle_ia")
+    if saisie:
+        return saisie
+    try:
+        return st.secrets.get("ANTHROPIC_API_KEY") or None
+    except Exception:  # pas de fichier de secrets
+        return None
+
+
+MOTEURS = {"⚙️ Hors ligne : gratuit, sans Internet": "hors_ligne",
+           "🤝 IA en renfort : l'IA aide si le moteur ne comprend pas": "renfort",
+           "🤖 IA d'abord : l'IA comprend, les outils calculent": "auto"}
+ETIQUETTES = {"llm": "🤖 IA + calculs vérifiés", "hors_ligne": "⚙️ moteur hors ligne", "garde-fou": "🛡️ garde-fou",
+              "indisponible": "⚠️ IA indisponible"}
+
 with st.sidebar:
-    hors_ligne = st.toggle("Mode hors ligne (sans Internet)", value=False,
-                           help="Le copilote répond avec le même moteur de calcul, sans modèle de langage.")
-    st.caption("Sans clé d'API, le copilote travaille toujours hors ligne : il comprend la question, interroge une copie "
-               "des données en lecture seule, puis rédige la réponse à partir du résultat.")
+    st.markdown("**Moteur du copilote**")
+    cle = cle_secrete()
+    with st.expander("🔑 Activer l'IA (facultatif)", expanded=False):
+        st.caption("L'application marche sans clé. Avec une clé d'API Anthropic, l'IA comprend les formulations très libres ; "
+                   "elle ne calcule jamais : elle appelle les mêmes fonctions vérifiées, et tout chiffre absent de leurs "
+                   "résultats est signalé. La clé reste dans ta session : elle n'est ni enregistrée ni journalisée.")
+        st.caption("⚠️ Avec l'IA, la question et les résultats des fonctions (sans contacts ni salariés) sont envoyés au "
+                   "fournisseur du modèle. Hors ligne, rien ne sort de l'application.")
+        saisie = st.text_input("Clé d'API", type="password", value=st.session_state.get("cle_ia", ""), placeholder="sk-ant-…")
+        if saisie != st.session_state.get("cle_ia", ""):
+            st.session_state.cle_ia = saisie.strip()
+            st.rerun()
+    if cle:
+        choix = st.radio("Moteur", list(MOTEURS), index=1, label_visibility="collapsed")
+        moteur = MOTEURS[choix]
+    else:
+        moteur = "hors_ligne"
+        st.caption("⚙️ Moteur hors ligne actif : il comprend la question, interroge une copie des données en lecture seule, "
+                   "puis rédige la réponse à partir du résultat.")
     with st.expander("Ce que je peux interroger"):
         st.write(askdata.decrire_schema(data))
     if st.session_state.memoire and st.session_state.memoire.get("plan"):
@@ -71,8 +103,16 @@ def details(m, rang, dernier):
         st.html(trust_html(c, scores))
         if c["a_confirmer"]:
             st.warning("À confirmer : les données utilisées sont peu fiables.")
+    if meta.get("chiffres_a_verifier"):
+        st.warning("À vérifier : " + ", ".join(meta["chiffres_a_verifier"]) + " ne figure pas dans les résultats des fonctions de "
+                   "calcul. L'IA a pu se tromper : ne pas utiliser ce chiffre sans le contrôler.")
+    if meta.get("ia_erreur"):
+        st.caption(f"L'IA n'a pas répondu ({meta['ia_erreur']}) : réponse du moteur hors ligne.")
+    etiquette = ETIQUETTES.get(meta["mode"], meta["mode"].replace("_", " "))
     if meta["sources"]:
-        st.caption("Sources : " + ", ".join(meta["sources"]) + f" · mode : {meta['mode'].replace('_', ' ')}")
+        st.caption("Sources : " + ", ".join(meta["sources"]) + f" · {etiquette}")
+    else:
+        st.caption(etiquette)
     if meta.get("explication"):
         with st.expander("🔎 Comment j'ai trouvé cette réponse"):
             for i, etape in enumerate(meta["explication"], 1):
@@ -117,7 +157,7 @@ if question:
     historique = [{"role": m["role"], "content": m["content"]} for m in msgs[:-1][-8:]]
     with st.chat_message("assistant"):
         with st.spinner("Je réfléchis…"):
-            r = copilot.ask(question, role, data, scores, mode="hors_ligne" if hors_ligne else "auto", log_fn=log_action,
+            r = copilot.ask(question, role, data, scores, mode=moteur, cle=cle, log_fn=log_action,
                             memoire=st.session_state.memoire, problemes=problemes, historique=historique)
         st.session_state.memoire = r["memoire"]
         ecrire(r["texte"], progressif=True)

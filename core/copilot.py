@@ -261,6 +261,7 @@ def _executer(nom, args, ctx):
             return {"erreur": "question non comprise : reformuler avec le nom d'une table (commandes, stocks, fournisseurs, production, clients)"}
         ctx["fichiers"] |= set(r["tables"])
         ctx["plan"] = r["plan"]
+        ctx["tableau"], ctx["requete"], ctx["explication"] = r.get("tableau"), r["requete"], r.get("explication") or []
         return {"reponse": r["texte"], "requete": r["requete"]}
     return {"erreur": f"outil inconnu : {nom}"}
 
@@ -696,9 +697,15 @@ def _rep_donnees(ctx, question, memoire):
                suggestions=sug, fichiers=set(r["tables"]), tableau=r["tableau"], requete=r["requete"])
 
 
+HORS_SUJET = re.compile(r"\b(blague|blagues|poeme|poemes|chanson|histoire drole|raconte|raconter|ecris moi|ecris un|"
+                        r"ecrire un|traduis|traduire|recette|horoscope|meteo|devinette)\b")
+
+
 def _hors_ligne(question, ctx, memoire):
     """Comprend la question, appelle les fonctions de calcul et retourne une Rep (ou None si incomprise)."""
     data, q = ctx["data"], _norm(question)
+    if HORS_SUJET.search(q):  # demande creative ou sans rapport avec les donnees : ne pas deviner a partir d'un mot-cle
+        return None
     ent = nlu.extraire(q, data)
     intention, suivi, expliquer = nlu.choisir_intention(q, ent, memoire)
     memoire = memoire or {}
@@ -776,19 +783,60 @@ def _llm(question, role, ctx, client, historique=None):
         for b in rep.content:
             if b.type == "tool_use":
                 ctx["outils"].append(b.name)
-                resultats.append({"type": "tool_result", "tool_use_id": b.id,
-                                  "content": _json(_executer(b.name, dict(b.input), ctx))})
+                sortie = _executer(b.name, dict(b.input), ctx)
+                ctx.setdefault("resultats", []).append(sortie)
+                resultats.append({"type": "tool_result", "tool_use_id": b.id, "content": _json(sortie)})
         msgs.append({"role": "user", "content": resultats})
     raise RuntimeError("trop d'appels d'outils")
 
 
-def _client():
-    """Client du modele de langage, ou None si la cle ou la bibliotheque manque."""
-    if not os.getenv("ANTHROPIC_API_KEY"):
+def _nombres_connus(o, sortie):
+    """Tous les nombres qu'un outil a renvoyes (valeurs, nombres dans les textes, tailles des listes)."""
+    if isinstance(o, bool) or o is None:
+        return
+    if isinstance(o, (int, float)):
+        sortie.add(float(o))
+    elif isinstance(o, str):
+        for n in re.findall(r"\d+(?:[.,]\d+)?", o):
+            sortie.add(float(n.replace(",", ".")))
+    elif isinstance(o, dict):
+        for v in o.values():
+            _nombres_connus(v, sortie)
+    elif isinstance(o, (list, tuple, set)):
+        sortie.add(float(len(o)))
+        for v in o:
+            _nombres_connus(v, sortie)
+    elif hasattr(o, "item"):
+        _nombres_connus(o.item(), sortie)
+
+
+def chiffres_non_verifies(texte, question, resultats):
+    """Chiffres de la reponse du modele qui ne viennent NI de la question NI des resultats des outils.
+    C'est le filet de securite : le modele n'a pas le droit de calculer, donc tout chiffre doit etre retrouvable."""
+    connus = set()
+    for r in resultats:
+        _nombres_connus(r, connus)
+    for n in re.findall(r"\d+(?:[.,]\d+)?", question):
+        connus.add(float(n.replace(",", ".")))
+    texte = re.sub(r"(?<=\d)[\s  ](?=\d{3}\b)", "", texte)  # « 1 200 » -> « 1200 »
+    inconnus = []
+    for brut in re.findall(r"\d+(?:[.,]\d+)?", texte):
+        x = float(brut.replace(",", "."))
+        if not any(abs(x - c) <= 0.01 or round(c) == round(x) and abs(c - x) < 0.5 for c in connus):
+            if brut not in inconnus:
+                inconnus.append(brut)
+    return inconnus
+
+
+def _client(cle=None):
+    """Client du modele de langage, ou None si la cle ou la bibliotheque manque.
+    cle : cle saisie dans l'application (gardee en memoire de la session, jamais ecrite ni journalisee)."""
+    cle = cle or os.getenv("ANTHROPIC_API_KEY")
+    if not cle:
         return None
     try:
         import anthropic
-        return anthropic.Anthropic(timeout=20.0, max_retries=1)
+        return anthropic.Anthropic(api_key=cle, timeout=20.0, max_retries=1)
     except ImportError:
         return None
 
@@ -819,8 +867,10 @@ def _garde_fou(q, role):
 
 # ------------------------------------------------------------------ point d'entree
 def ask(question, role, data, scores, mode="auto", client=None, journaliser=True, log_fn=None,
-        memoire=None, problemes=None, historique=None):
-    """mode : « auto » (IA si possible, sinon hors ligne), « llm » (IA seulement), « hors_ligne ».
+        memoire=None, problemes=None, historique=None, cle=None):
+    """mode : « auto » (IA d'abord si possible, sinon hors ligne), « llm » (IA seulement), « hors_ligne »,
+    « renfort » (moteur hors ligne d'abord ; l'IA n'intervient que s'il ne comprend pas la question).
+    cle : cle d'API saisie par l'utilisateur (optionnelle ; sinon variable d'environnement ANTHROPIC_API_KEY).
     memoire : celle renvoyee par la question precedente (pour « Et pour Sigma ? »).
     problemes : problemes deja detectes par l'application (evite de les recalculer).
     historique : messages precedents [{"role", "content"}] pour le modele de langage."""
@@ -848,10 +898,31 @@ def ask(question, role, data, scores, mode="auto", client=None, journaliser=True
         conf = trust_score(sources, scores) if sources else None
         if conf:
             mem["confiance_score"] = conf["score"]
+        verif = chiffres_non_verifies(texte, question, ctx.get("resultats", [])) if mode_ == "llm" else []
         return {"texte": texte, "sources": sources, "confiance": conf, "options": rep.get("options", ctx["options"]),
                 "outils": list(ctx["outils"]), "mode": mode_, "memoire": mem,
-                "suggestions": list(rep.get("suggestions") or []), "explication": list(rep.get("explication") or []),
-                "intention": ctx.get("intention"), "tableau": rep.get("tableau"), "requete": rep.get("requete")}
+                "suggestions": list(rep.get("suggestions") or []),
+                "explication": list(rep.get("explication") or ctx.get("explication") or []),
+                "intention": ctx.get("intention"), "tableau": rep.get("tableau", ctx.get("tableau")),
+                "requete": rep.get("requete", ctx.get("requete")),
+                "chiffres_a_verifier": verif, "ia_erreur": ctx.get("ia_erreur")}
+
+    def essayer_llm():
+        """Reponse du modele de langage, ou None s'il est indisponible (l'erreur est notee, jamais la cle)."""
+        nonlocal client
+        client = client or _client(cle)
+        if client is None:
+            return None
+        try:
+            return reponse(_llm(question, role, ctx, client, historique), "llm")
+        except Exception as e:  # service indisponible, cle refusee, pas d'Internet, delai depasse...
+            ctx["ia_erreur"] = type(e).__name__
+            for k in ("tableau", "requete", "explication", "resultats"):
+                ctx.pop(k, None)
+            ctx["outils"].clear()
+            ctx["options"] = None
+            ctx["fichiers"].clear()
+            return None
 
     refus = _garde_fou(q, role)
     if refus:
@@ -860,18 +931,17 @@ def ask(question, role, data, scores, mode="auto", client=None, journaliser=True
             journal(role, "acces_refuse", question[:120])
         return reponse(texte, "garde-fou")
 
-    if mode != "hors_ligne":
-        client = client or _client()
-        if client is not None:
-            try:
-                return reponse(_llm(question, role, ctx, client, historique), "llm")
-            except Exception:  # service indisponible, pas d'Internet, delai depasse...
-                ctx["outils"].clear()
-                ctx["options"] = None
-                ctx["fichiers"].clear()
+    if mode in ("auto", "llm"):
+        rep_ia = essayer_llm()
+        if rep_ia is not None:
+            return rep_ia
         if mode == "llm":
             return reponse("Le modèle de langage n'est pas disponible pour le moment.", "indisponible")
     rep = _hors_ligne(question, ctx, memoire)
+    if rep is None and mode == "renfort":  # le moteur hors ligne n'a pas compris : l'IA prend le relais
+        rep_ia = essayer_llm()
+        if rep_ia is not None:
+            return rep_ia
     if rep is not None and rep.get("garder_sources"):
         ctx["fichiers"] |= set(memoire.get("sources") or [])
     if rep is None:

@@ -25,6 +25,7 @@ Prototype réalisé pour le **CREATE WITH AI Hackathon** (JNC Africa, 2026). Il 
 - **L'IA ne calcule jamais.** Le copilote choisit parmi des fonctions de calcul vérifiables (`get_stock_coverage`, `simulate_supplier_delay`, `list_options`, `get_trust`, `get_passport`, `explain_trust`, `get_quality_report`, `rank_suppliers`, `get_briefing`, `get_order`, `query_data`) et reformule leur résultat. Chaque chiffre vient d'une de ces fonctions. Pour les questions libres, `query_data` transforme la question en requête SQL en lecture seule sur une copie des données qui ne contient aucun nom, téléphone, e-mail ni salarié ; la requête et la compréhension de la question sont visibles sous chaque réponse (« Comment j'ai trouvé cette réponse »).
 - **Score de confiance :** moyenne pondérée des notes de qualité des fichiers utilisés, plafonnée à la note du fichier le plus faible plus 15 points. Vert à partir de 80, orange de 60 à 79, rouge en dessous de 60.
 - **Mode hors ligne :** sans clé d'API ni Internet, un moteur de secours appelle les mêmes fonctions. Les chiffres, sources et scores sont identiques ; seule la formulation change.
+- **IA optionnelle (trois moteurs au choix dans la page Copilote) :** *Hors ligne* (par défaut, rien ne sort de l'application), *IA en renfort* (le moteur hors ligne répond d'abord ; l'IA n'intervient que s'il ne comprend pas la question) et *IA d'abord*. La clé d'API se colle dans la page (elle reste dans la session du visiteur, jamais enregistrée ni journalisée) ou se fournit comme secret de l'hébergeur. Garde-fous : les demandes de données personnelles sont bloquées avant l'IA, l'IA n'a accès qu'aux fonctions de calcul, tout chiffre de sa réponse absent des résultats de ces fonctions est signalé « À vérifier », et si l'IA est indisponible l'application revient seule au mode hors ligne. Avec l'IA, la question et les résultats des fonctions sont envoyés au fournisseur du modèle.
 - **Base de données SQLite :** chaque visiteur a sa propre base (module standard de Python : gratuit, sans serveur, sans clé). Elle contient les données, le journal des actions, l'historique de la note de qualité, les validations (annulables d'un clic) et les décisions retenues. Le directeur peut l'interroger en lecture seule avec du SQL et la télécharger.
 - **Droits par rôle :** le *Directeur général* voit tout et valide les corrections ; le *Stagiaire logistique* voit des colonnes masquées (noms, téléphones, e-mails, salaires) et ne peut pas valider. Un message « Vous n'avez pas accès… » s'affiche à chaque accès refusé, et les actions sont inscrites dans un journal.
 
@@ -46,7 +47,7 @@ Pour activer le modèle de langage, copie `.env.example` en `.env` et renseigne 
 python check_scenario.py   # le scénario Delta (arrêt J+4, manque 1 200)
 python check_quality.py    # détection et correction des défauts
 python check_supply.py     # graphe, simulation et options A, B, C
-python check_copilot.py    # copilote, droits, mode hors ligne, questions libres
+python check_copilot.py    # copilote, droits, mode hors ligne, IA optionnelle (faux client), questions libres
 python check_askdata.py    # moteur de questions libres (28 questions, lecture seule)
 python check_report.py     # alertes et rapport PDF (sans donnée personnelle)
 python check_demo.py       # import de fichiers, simulation « et si », fiches du graphe
