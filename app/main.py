@@ -1,4 +1,4 @@
-"""Point d'entree : menu de gauche (Accueil, Données, Chaîne, Copilote, Tableau de bord), thème et choix du rôle."""
+"""Point d'entree : menu de gauche (Accueil, Données, Chaîne, Copilote, Tableau de bord, Importer), thème et choix du rôle."""
 from pathlib import Path
 
 import streamlit as st
@@ -19,4 +19,5 @@ st.navigation([
     st.Page("pages/2_Chaine.py", title="Chaîne", icon="🔗"),
     st.Page("pages/3_Copilote.py", title="Copilote", icon="💬"),
     st.Page("pages/4_Tableau_de_bord.py", title="Tableau de bord", icon="📊"),
+    st.Page("pages/5_Importer.py", title="Importer", icon="📥"),
 ]).run()

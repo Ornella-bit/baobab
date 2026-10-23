@@ -38,6 +38,17 @@ def stock_coverage(data, ligne, matiere):
     return {"stock": round(stock), "conso_par_jour": round(conso), "jours": stock / conso}
 
 
+def scenario_par_defaut(data):
+    """(fournisseur, retard en jours) du scenario de la fiche ; si ce fournisseur n'existe pas dans les donnees
+    (fichiers importes), le fournisseur dont un retard fait le plus de degats."""
+    sc = PARAMS["scenario"]
+    noms = sorted(data["fournisseurs"]["fournisseur"].unique())
+    if sc["fournisseur_en_retard"] in noms or not noms:
+        return sc["fournisseur_en_retard"], sc["retard_jours"]
+    pire = max(noms, key=lambda f: (simulate_supplier_delay(data, f, sc["retard_jours"])["manque"], f))
+    return pire, sc["retard_jours"]
+
+
 def simulate_supplier_delay(data, fournisseur, retard_jours, ligne=None, matiere=None):
     """Simule le retard d'un fournisseur. Retourne :
     arret_jour (int ou None), manque (unites), commandes (ids), clients (noms), couverture_jours,
@@ -82,6 +93,11 @@ def simulate_supplier_delay(data, fournisseur, retard_jours, ligne=None, matiere
                 menacees.append({"commande_id": o["commande_id"], "client": o["client"], "produit": o["produit"],
                                  "quantite": int(o["quantite"]), "date_livraison": str(o["date_livraison"]),
                                  "jour": jour})
+    uniques = {}
+    for o in menacees:  # une commande touchee par deux arrets n'est comptee qu'une fois (la plus precoce)
+        if o["commande_id"] not in uniques or o["jour"] < uniques[o["commande_id"]]["jour"]:
+            uniques[o["commande_id"]] = o
+    menacees = list(uniques.values())
     menacees.sort(key=lambda o: o["commande_id"])
     res["commandes_detail"] = menacees
     res["commandes"] = [o["commande_id"] for o in menacees]

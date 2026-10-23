@@ -6,6 +6,7 @@ from theme import alert_rows, bars_html, page_header, show_line, trust_html
 
 from core import alerts, db, quality, rbac, report
 from core.loader import PARAMS
+from core.simulate import scenario_par_defaut
 from core.trust import couleur, trust_score
 
 setup("Tableau de bord")
@@ -30,10 +31,11 @@ def rapport_pdf(version, fournisseur, retard, peut_voir_decisions, _data, _score
 def tableau():
     """Fragment : changer de scénario met à jour les alertes et le rapport sans recharger la page."""
     fournisseurs = sorted(data["fournisseurs"]["fournisseur"].unique())
+    defaut = scenario_par_defaut(data)
     c1, c2 = st.columns([1, 2])
-    fournisseur = c1.selectbox("Scénario : fournisseur en retard", fournisseurs, index=fournisseurs.index(sc["fournisseur_en_retard"]),
+    fournisseur = c1.selectbox("Scénario : fournisseur en retard", fournisseurs, index=fournisseurs.index(defaut[0]),
                                key="tb_fournisseur")
-    retard = c2.slider("Retard annoncé (jours)", 0, 10, sc["retard_jours"], key="tb_retard")
+    retard = c2.slider("Retard annoncé (jours)", 0, 10, defaut[1], key="tb_retard")
     liste = alerts.compute_alerts(data, scores, issues, fournisseur, retard)
     resume = alerts.resume_alertes(liste)
     note = quality.global_score(scores)

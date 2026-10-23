@@ -18,7 +18,7 @@ from reportlab.graphics.shapes import Drawing, Line, Rect, String
 from core import alerts as al
 from core import quality
 from core.loader import PARAMS
-from core.simulate import list_options, simulate_supplier_delay
+from core.simulate import list_options, scenario_par_defaut, simulate_supplier_delay
 from core.trust import couleur, trust_score
 
 VERT, VERT_CLAIR, SABLE, ENCRE, GRIS = colors.HexColor("#24543B"), colors.HexColor("#E8F5EA"), colors.HexColor("#F9F5E9"), colors.HexColor("#202923"), colors.HexColor("#5E655E")
@@ -131,8 +131,9 @@ def build_report(data, scores, issues=None, sains=None, avant=None, decisions=No
     decisions : DataFrame des decisions prises (core.db.read_decisions) ; fournisseur / retard_jours : scenario."""
     s = _styles()
     sc = PARAMS["scenario"]
-    fournisseur = fournisseur or sc["fournisseur_en_retard"]
-    retard_jours = sc["retard_jours"] if retard_jours is None else retard_jours
+    defaut = scenario_par_defaut(data)
+    fournisseur = fournisseur or defaut[0]
+    retard_jours = defaut[1] if retard_jours is None else retard_jours
     maintenant = maintenant or datetime.now()
     buf = BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=1.8 * cm, rightMargin=1.8 * cm, topMargin=1.6 * cm, bottomMargin=2.0 * cm,

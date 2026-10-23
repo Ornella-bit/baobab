@@ -13,8 +13,9 @@ Prototype réalisé pour le **CREATE WITH AI Hackathon** (JNC Africa, 2026). Il 
 | Page | Rôle | Ce qu'on y voit |
 | --- | --- | --- |
 | **Données** (racines) | DataCompass | Scanne 6 fichiers (6 517 lignes), détecte 2 228 problèmes (doublons, e-mails manquants, unités mélangées…), propose 1 419 corrections que le directeur valide. Lignes sans défaut : 68,8 % → 87,8 %. |
-| **Chaîne** (tronc) | SupplyMind | Relie fournisseurs, matières, lignes, produits, commandes et clients. Simule le retard d'un fournisseur : arrêt de production, manque, commandes et clients touchés, trois solutions chiffrées. |
+| **Chaîne** (tronc) | SupplyMind | Relie fournisseurs, matières, lignes, produits, commandes et clients. Simule le retard d'un fournisseur : arrêt de production, manque, commandes et clients touchés, trois solutions chiffrées. Simulation « Et si… ? » (consommation, stock en plus), graphe explorable élément par élément et carte des risques par fournisseur. |
 | **Copilote** (cime) | Copilote | Répond en français, cite ses fichiers sources, affiche un score de confiance (vert, orange, rouge « à confirmer »). Répond à des questions libres sur les données (ex. « Quel client a la plus grosse commande ? », « Compare Sigma et Delta »), se souvient de la conversation, explique son calcul. Fonctionne aussi sans Internet. |
+| **Importer** | Pack démo | Déposez un CSV ou un Excel (même mal présenté) : le type est reconnu, les colonnes reliées, l'effet sur les notes est montré avant d'appliquer, et l'import s'annule. Les fichiers de salaires sont refusés. |
 | **Tableau de bord** | Pilotage | Alertes classées (urgent, à surveiller), note de qualité par fichier, jours de stock par ligne, évolution de la note, et **rapport PDF** de 3 à 4 pages à télécharger (sans aucune donnée personnelle). |
 
 **Scénario de démonstration :** le fournisseur Delta annonce 5 jours de retard. La Ligne 2 s'arrêterait à J+4, il manquerait 1 200 unités, 3 commandes et 2 clients seraient touchés. Option A : transférer le stock de l'entrepôt Nord (0 % de surcoût, risque moyen). Option B : commande express chez Sigma (+6 %, risque faible). Option C : reporter la production (+2 %, risque élevé).
@@ -48,6 +49,7 @@ python check_supply.py     # graphe, simulation et options A, B, C
 python check_copilot.py    # copilote, droits, mode hors ligne, questions libres
 python check_askdata.py    # moteur de questions libres (28 questions, lecture seule)
 python check_report.py     # alertes et rapport PDF (sans donnée personnelle)
+python check_demo.py       # import de fichiers, simulation « et si », fiches du graphe
 python check_db.py         # base SQLite : relecture, validation, annulation, requêtes en lecture seule
 ```
 
@@ -55,8 +57,8 @@ Chaque commande doit se terminer par « OK ».
 
 ## Structure
 
-- `app/` : application Streamlit (accueil, Données, Chaîne, Copilote, Tableau de bord, thème et visuels)
-- `core/` : logique métier (`quality`, `graph`, `simulate`, `trust`, `rbac`, `pii`, `copilot`, `askdata`, `nlu`, `alerts`, `report`, `loader`, `db`)
+- `app/` : application Streamlit (accueil, Données, Chaîne, Copilote, Tableau de bord, Importer, thème et visuels)
+- `core/` : logique métier (`quality`, `graph`, `simulate`, `trust`, `rbac`, `pii`, `copilot`, `askdata`, `nlu`, `alerts`, `report`, `importer`, `whatif`, `explorer`, `loader`, `db`)
 - `config/params.json` : paramètres du scénario (retard, stocks, surcoûts, seuils de confiance)
 - `generate_data.py` : génère les données fictives avec des défauts placés volontairement
 - `SPECS.md` : contrat entre les modules

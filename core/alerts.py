@@ -7,7 +7,7 @@ from datetime import date
 
 from core import quality
 from core.loader import PARAMS
-from core.simulate import simulate_supplier_delay, stock_coverage
+from core.simulate import scenario_par_defaut, simulate_supplier_delay, stock_coverage
 
 COUVERTURE_ROUGE = 3        # jours de stock : en dessous, alerte rouge
 COUVERTURE_ORANGE = 7       # en dessous, alerte orange
@@ -38,8 +38,9 @@ def compute_alerts(data, scores, issues=None, fournisseur=None, retard_jours=Non
     """Liste d'alertes [{niveau, titre, detail, page}] triee : rouge, orange, puis vert.
     fournisseur / retard_jours : scenario simule (par defaut celui de la fiche de presentation)."""
     sc = PARAMS["scenario"]
-    fournisseur = fournisseur or sc["fournisseur_en_retard"]
-    retard_jours = sc["retard_jours"] if retard_jours is None else retard_jours
+    defaut = scenario_par_defaut(data)
+    fournisseur = fournisseur or defaut[0]
+    retard_jours = defaut[1] if retard_jours is None else retard_jours
     alertes = []
 
     # 1) le scenario de retard fournisseur

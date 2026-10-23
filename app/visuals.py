@@ -16,9 +16,15 @@ def _libelle(nom, type_):
     return nom if len(nom) <= 22 else nom[:21] + "…"
 
 
-def chain_svg(graph, impactes=(), source=None, width=980):
-    """Dessine la chaine de gauche a droite. Rouge : touche par le retard ; orange : source du retard."""
+def chain_svg(graph, impactes=(), source=None, width=980, focus=None):
+    """Dessine la chaine de gauche a droite. Rouge : touche par le retard ; orange : source du retard.
+    focus : un element choisi par l'utilisateur ; lui et tout ce qui lui est relie (amont et aval) ressortent en vert, le reste s'estompe."""
     impactes, nw, nh, marge = set(impactes), 134, 28, 24
+    relies = set()
+    if focus is not None and focus in graph:
+        import networkx as nx
+        relies = nx.ancestors(graph, focus) | nx.descendants(graph, focus) | {focus}
+        impactes, source = set(), None
     colonnes = {t: sorted(n for n, d in graph.nodes(data=True) if d["type"] == t) for t in ORDRE}
     hauteur = max(len(v) for v in colonnes.values()) * 40 + 70
     pas = (width - 2 * marge - nw) / (len(ORDRE) - 1)
@@ -40,23 +46,31 @@ def chain_svg(graph, impactes=(), source=None, width=980):
         x1, y1, x2, y2 = xa + nw, ya + nh / 2, xb, yb + nh / 2
         xm = (x1 + x2) / 2
         rouge = a in chaud and b in chaud
+        vert = bool(relies) and a in relies and b in relies
+        couleur_trait = GREEN if vert else RED if rouge else LIGNE
+        opacite = 1 if (rouge or vert) else (0.25 if relies else 0.8)
         out.append(f"<path d='M{x1:.1f} {y1:.1f} C{xm:.1f} {y1:.1f} {xm:.1f} {y2:.1f} {x2:.1f} {y2:.1f}' fill='none' "
-                   f"stroke='{RED if rouge else LIGNE}' stroke-width='{2.2 if rouge else 1.1}' "
-                   f"opacity='{1 if rouge else 0.8}'/>")
+                   f"stroke='{couleur_trait}' stroke-width='{2.2 if (rouge or vert) else 1.1}' opacity='{opacite}'/>")
     for n, (x, y) in pos.items():
         type_ = graph.nodes[n]["type"]
-        if n == source:
+        pale = bool(relies) and n not in relies
+        if n == focus:
+            fond, trait, texte, epais = "#CFE9D8", GREEN, INK, 3
+        elif relies and n in relies:
+            fond, trait, texte, epais = "#E8F5EA", GREEN, INK, 1.8
+        elif n == source:
             fond, trait, texte, epais = "#FCE7DC", ORG, INK, 2
         elif n in impactes:
             fond, trait, texte, epais = "#FBE3E7", RED, INK, 2
         else:
             fond, trait, texte, epais = "#FFFFFF", LIGNE, MUT, 1.2
-        out.append(f"<rect x='{x:.1f}' y='{y:.1f}' width='{nw}' height='{nh}' rx='8' fill='{fond}' stroke='{trait}' "
+        out.append(f"<g opacity='{0.4 if pale else 1}'><rect x='{x:.1f}' y='{y:.1f}' width='{nw}' height='{nh}' rx='8' fill='{fond}' stroke='{trait}' "
                    f"stroke-width='{epais}'/><text x='{x + nw / 2:.1f}' y='{y + nh / 2 + 4:.1f}' text-anchor='middle' "
-                   f"font-size='12' font-weight='{600 if n in chaud else 400}' fill='{texte}'>{_libelle(n, type_)}</text>")
+                   f"font-size='12' font-weight='{600 if (n in chaud or n in relies) else 400}' fill='{texte}'>{_libelle(n, type_)}</text></g>")
     ly = hauteur + 10
-    for k, (couleur, fond, texte) in enumerate([(ORG, "#FCE7DC", "Source du retard"),
-                                                (RED, "#FBE3E7", "Touché par le retard"), (LIGNE, "#FFFFFF", "Non touché")]):
+    legende = ([(GREEN, "#CFE9D8", "Élément choisi"), (GREEN, "#E8F5EA", "Relié (avant ou après)"), (LIGNE, "#FFFFFF", "Sans lien")] if relies else
+               [(ORG, "#FCE7DC", "Source du retard"), (RED, "#FBE3E7", "Touché par le retard"), (LIGNE, "#FFFFFF", "Non touché")])
+    for k, (couleur, fond, texte) in enumerate(legende):
         x = marge + k * 190
         out.append(f"<rect x='{x}' y='{ly}' width='14' height='14' rx='4' fill='{fond}' stroke='{couleur}' stroke-width='1.6'/>"
                    f"<text x='{x + 22}' y='{ly + 11}' font-size='12' fill='{MUT}'>{texte}</text>")

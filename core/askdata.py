@@ -201,7 +201,7 @@ def reperer_valeurs(toks, index):
                     i + n < len(toks) and toks[i + n] in ("le", "la", "les", "passe", "commande", "plus", "moins", "des", "du", "de", "un", "une",
                                                           "ete", "eu", "fait", "ete", "achete", "recu", "ete", "coute", "paye", "l"):
                 cands = None  # « quel client a le plus… » : « a » est le verbe avoir
-            if not cands and n == 1 and len(gram) >= 5:
+            if not cands and n == 1 and len(gram) >= 5 and not gram.startswith("manqu"):
                 for alias, es in par_alias.items():
                     if " " not in alias and len(alias) >= 5 and nlu.distance(gram, alias) <= 1 and gram[0] == alias[0]:
                         cands = es

@@ -124,12 +124,13 @@ def extraire(q, data):
     m = re.search(r"\bligne\s*(1|2|un|deux)\b", q) or re.search(r"\bl([12])\b", q)
     if m:
         ent["ligne"] = "Ligne " + str(_nombre(m.group(1)))
+    toks_val = [t for t in toks if not t.startswith("manqu")]  # « manquer » ressemble a « mangue » : faux ami
     for mat, mots in MATIERES.items():
-        if any(mot_proche(t, mot) for t in toks for mot in mots):
+        if any(mot_proche(t, mot) for t in toks_val for mot in mots):
             ent["matiere"] = mat
     produits = list(data["production"]["produit"].unique())
     for p in produits:
-        if any(mot in toks or any(mot_proche(t, mot) for t in toks) for mot in [x for x in normaliser(p).split() if len(x) > 4 and x not in ("nectar",)]):
+        if any(mot in toks_val or any(mot_proche(t, mot) for t in toks_val) for mot in [x for x in normaliser(p).split() if len(x) > 4 and x not in ("nectar",)]):
             ent["produit"] = p
     if "nectar" in toks:
         ent["produit"] = next((p for p in produits if "nectar" in normaliser(p)), ent.get("produit"))

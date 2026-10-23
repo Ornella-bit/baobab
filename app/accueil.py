@@ -6,7 +6,7 @@ from theme import alert, cards, gauge_card, hero_texte, steps
 
 from core import quality
 from core.loader import PARAMS
-from core.simulate import simulate_supplier_delay
+from core.simulate import scenario_par_defaut, simulate_supplier_delay
 
 setup("Accueil")
 data = working_data()
@@ -14,7 +14,8 @@ scores, issues, sains = analyse()
 avant = st.session_state.avant
 note = quality.global_score(scores)
 sc = PARAMS["scenario"]
-sim = simulate_supplier_delay(data, sc["fournisseur_en_retard"], sc["retard_jours"])
+fournisseur_sc, retard_sc = scenario_par_defaut(data)
+sim = simulate_supplier_delay(data, fournisseur_sc, retard_sc)
 
 with st.container(border=True):
     colonne_texte, colonne_arbre = st.columns([3, 2], gap="medium", vertical_alignment="center")
@@ -26,11 +27,12 @@ st.html(cards([
     ("🔗", "ÉTAPE 2 · TRONC", "Chaîne", "Relier fournisseurs, matières, lignes, commandes et clients, et simuler un retard."),
     ("💬", "ÉTAPE 3 · CIME", "Copilote", "Poser une question en français : réponse avec sources et score de confiance."),
 ]))
-c1, c2, c3, c4 = st.columns(4)
+c1, c2, c3, c4, c5 = st.columns(5)
 c1.page_link("pages/1_Donnees.py", label="Ouvrir les données", icon="🗂️")
 c2.page_link("pages/2_Chaine.py", label="Ouvrir la chaîne", icon="🔗")
 c3.page_link("pages/3_Copilote.py", label="Ouvrir le copilote", icon="💬")
 c4.page_link("pages/4_Tableau_de_bord.py", label="Tableau de bord et rapport PDF", icon="📊")
+c5.page_link("pages/5_Importer.py", label="Importer vos fichiers", icon="📥")
 
 st.subheader("Essayez le copilote en un clic")
 EXEMPLES = ["Que se passe-t-il si Delta a 5 jours de retard ?", "Quel client a passé la plus grosse commande ?",
@@ -47,7 +49,7 @@ with g:
 with a:
     if sim["arret_jour"] is not None:
         st.html(alert("rouge", f"Alerte : la {sim['ligne']} s'arrêterait à J+{sim['arret_jour']}",
-                      f"{sc['fournisseur_en_retard']} annonce {sc['retard_jours']} jours de retard · {len(sim['commandes'])} commandes "
+                      f"{fournisseur_sc} annonce {retard_sc} jours de retard · {len(sim['commandes'])} commandes "
                       f"et {len(sim['clients'])} clients touchés. Voir la page Chaîne pour les trois solutions."))
     else:
         st.html(alert("vert", "Aucun arrêt de production prévu", "Les stocks couvrent le retard annoncé."))

@@ -76,6 +76,7 @@ h2, h3 { color: #24543B; letter-spacing: -0.01em; }
 .bb-al.rouge .pt { background: #D6334A; } .bb-al.orange .pt { background: #E08A3C; } .bb-al.vert .pt { background: #3E8E5E; }
 .bb-al b { color: #202923; font-size: .95rem; } .bb-al span { display: block; color: #5E655E; font-size: .86rem; margin-top: 2px; }
 .bb-al .pg { margin-left: auto; font-size: .75rem; font-weight: 700; color: #5E655E; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+.bb-heat td { text-align: center; }
 .bb-bar { display: flex; align-items: center; gap: 10px; margin: 7px 0; font-size: .9rem; color: #202923; }
 .bb-bar .n { flex: 0 0 150px; } .bb-bar .v { flex: 0 0 64px; text-align: right; font-weight: 700; }
 .bb-bar .t { flex: 1; height: 12px; background: #EFE8D5; border-radius: 999px; overflow: hidden; }
@@ -153,6 +154,20 @@ def alert_rows(alertes):
     """Liste d'alertes (core.alerts.compute_alerts) en cartes colorees."""
     return "".join(f"<div class='bb-al {a['niveau']}'><div class='pt'></div><div><b>{a['titre']}</b><span>{a['detail']}</span></div>"
                    f"<div class='pg'>{a['page']}</div></div>" for a in alertes)
+
+
+def heatmap_html(lignes, colonnes, valeurs, titre_ligne=""):
+    """Carte de chaleur en HTML : valeurs[ligne][colonne] ; 0 = vert, au-dela degrade orange -> rouge selon le maximum."""
+    haut = max((v for r in valeurs for v in r), default=0) or 1
+    def cellule(v):
+        if v == 0:
+            return "<td style='background:#E8F5EA;color:#1F6A31'>0</td>"
+        t = min(1, v / haut)
+        fond = f"rgba(214,51,74,{0.18 + 0.62 * t:.2f})"
+        return f"<td style='background:{fond};color:#202923;font-weight:700'>{v:,}</td>".replace(",", " ")
+    entete = f"<th>{titre_ligne}</th>" + "".join(f"<th style='text-align:center'>{c}</th>" for c in colonnes)
+    corps = "".join(f"<tr><td><b>{l}</b></td>" + "".join(cellule(v) for v in r) + "</tr>" for l, r in zip(lignes, valeurs))
+    return f"<div class='bb-tbl-wrap'><table class='bb-tbl bb-heat'><thead><tr>{entete}</tr></thead><tbody>{corps}</tbody></table></div>"
 
 
 def bars_html(items, maximum=100):

@@ -19,7 +19,7 @@ from collections import Counter
 
 from core import askdata, nlu, quality, rbac
 from core.loader import PARAMS, ROOT
-from core.simulate import _stock, list_options, simulate_supplier_delay, stock_coverage
+from core.simulate import _stock, list_options, simulate_supplier_delay, stock_coverage, scenario_par_defaut
 from core.trust import couleur, trust_score
 
 try:  # la cle se lit dans le fichier .env (jamais publie sur GitHub)
@@ -208,10 +208,10 @@ def get_briefing(ctx):
     sc = PARAMS["scenario"]
     data, scores = ctx["data"], ctx["scores"]
     faible = min(scores, key=scores.get)
-    sim = simulate_supplier_delay(data, sc["fournisseur_en_retard"], sc["retard_jours"])
+    sim = simulate_supplier_delay(data, *scenario_par_defaut(data))
     return {"note_globale": quality.global_score(scores), "fichier_le_plus_faible": faible,
             "note_la_plus_faible": scores[faible], "couvertures": _couvertures(data)[:3],
-            "scenario": {"fournisseur": sc["fournisseur_en_retard"], "retard_jours": sc["retard_jours"],
+            "scenario": {"fournisseur": scenario_par_defaut(data)[0], "retard_jours": scenario_par_defaut(data)[1],
                          "ligne": sim["ligne"], "arret_jour": sim["arret_jour"], "manque": sim["manque"],
                          "commandes": sim["commandes"], "clients": sim["clients"]}}
 
@@ -222,7 +222,7 @@ def get_order(data, commande_id=None, client=None):
     if sel.empty:
         return {"erreur": "commande ou client inconnu"}
     sc = PARAMS["scenario"]
-    sim = simulate_supplier_delay(data, sc["fournisseur_en_retard"], sc["retard_jours"])
+    sim = simulate_supplier_delay(data, *scenario_par_defaut(data))
     return {"scenario": f"{sc['fournisseur_en_retard']}, {sc['retard_jours']} jours de retard",
             "commandes": [{"commande_id": r["commande_id"], "client": r["client"], "produit": r["produit"],
                            "quantite": int(r["quantite"]), "date_livraison": str(r["date_livraison"]),
@@ -310,7 +310,7 @@ def _fusion(ent, memoire, cles):
 
 def _rep_retard(ctx, e, ent):
     data, sc = ctx["data"], PARAMS["scenario"]
-    four = e["fournisseur"] or sc["fournisseur_en_retard"]
+    four = e["fournisseur"] or scenario_par_defaut(data)[0]
     n = int(e["retard_jours"]) if e["retard_jours"] is not None else sc["retard_jours"]
     sim = _executer("simulate_supplier_delay", {"fournisseur": four, "retard_jours": n}, ctx)
     ctx["outils"].append("simulate_supplier_delay")
@@ -516,7 +516,7 @@ def _rep_classement(ctx, e):
 
 def _rep_reco(ctx, e, memoire):
     sc = PARAMS["scenario"]
-    four = e["fournisseur"] or sc["fournisseur_en_retard"]
+    four = e["fournisseur"] or scenario_par_defaut(data)[0]
     n = int(e["retard_jours"]) if e["retard_jours"] is not None else sc["retard_jours"]
     sim = _executer("simulate_supplier_delay", {"fournisseur": four, "retard_jours": n}, ctx)
     ctx["outils"].append("simulate_supplier_delay")
@@ -558,7 +558,7 @@ def _rep_option(ctx, e, ent, memoire):
     """« Détaille la solution B » : explique pourquoi une option est faisable ou non."""
     code = ent["option"]
     options = (memoire or {}).get("options")
-    four, n = e["fournisseur"] or PARAMS["scenario"]["fournisseur_en_retard"], e["retard_jours"] or PARAMS["scenario"]["retard_jours"]
+    four, n = e["fournisseur"] or scenario_par_defaut(ctx["data"])[0], e["retard_jours"] or PARAMS["scenario"]["retard_jours"]
     sim = _executer("simulate_supplier_delay", {"fournisseur": four, "retard_jours": int(n)}, ctx)
     ctx["outils"].append("simulate_supplier_delay")
     if sim["arret_jour"] is None:

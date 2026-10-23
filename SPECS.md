@@ -75,6 +75,9 @@ Toutes les fonctions reçoivent des DataFrames pandas ou le dictionnaire `data` 
 | `askdata.repondre(question, data, plan_precedent=None)` | `{texte, tableau, requete, plan, explication}` ou `None` : question libre -> plan -> SQL en lecture seule sur une copie sans données personnelles |
 | `alerts.compute_alerts(data, scores, issues=None, fournisseur=None, retard_jours=None)` | liste `{niveau (rouge/orange/vert), titre, detail, page}` triée par urgence ; seuils en tête de `core/alerts.py` |
 | `report.build_report(data, scores, issues, sains, avant, decisions, fournisseur, retard_jours, logo_path)` | octets d'un PDF (alertes, qualité, chaîne, solutions, fournisseurs, décisions), sans donnée personnelle |
+| `importer.lire_fichier(octets, nom)`, `importer.detecter_table(df)`, `importer.relier_colonnes(df, table)`, `importer.preparer(df, table, lien)`, `importer.appliquer(data, table, nouveau, mode)` | DataFrame ; `[(table, part)]` ; `{colonne attendue: colonne du fichier}` ; `(DataFrame, rapport)` ; `(jeu de données, erreur ou None)` : le jeu est d'abord testé en entier, et `data` n'est jamais modifié |
+| `whatif.comparer(data, fournisseur, retard_jours, conso_pct, stock_supplementaire)`, `whatif.sensibilite(...)`, `whatif.carte_des_risques(...)` | avant / après d'un scénario « Et si… ? » sur une copie des données ; manque selon le retard ; manque par fournisseur et par retard |
+| `explorer.fiche(data, graph, noeud)` | `{type, titre, faits, alerte, amont, aval}` d'un élément de la chaîne |
 | `copilot.get_stock_coverage(data, ligne, matiere)`, `copilot.get_passport(data, produit)` | `{ligne, matiere, stock, conso_par_jour, jours}` ; passeport du produit |
 
 Un **problème** est un dictionnaire : `id`, `fichier`, `type` (doublon, format, valeur_aberrante, manquant, unite), `ligne`, `colonne`, `valeur`, `correction`, `statut` (a_valider, valide, refuse).
